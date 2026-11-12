@@ -320,8 +320,8 @@ function sunmap(){
  $("mapinfo").textContent="Updated "+hm(um,1);bands()}
 function solar(){var set=function(id,v){$(id).textContent=isNaN(v)?"--":v},bad=function(){$("solnote").textContent="Solar data unavailable here. It loads on a hosted or downloaded copy with a network connection."};
  try{
- fetch("https://services.swpc.noaa.gov/products/summary/10cm-flux.json").then(function(r){return r.json()}).then(function(j){var f=parseFloat(j.Flux);set("sfi",f);SOL.sfi=isNaN(f)?null:f;bands()}).catch(bad);
- fetch("https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json").then(function(r){return r.json()}).then(function(j){var l=j[j.length-1],k=parseFloat(l[1]);set("kp",k);SOL.kp=isNaN(k)?null:k;bands();AL.kp=k>=5?"Geomagnetic storm (Kp "+k+"). HF conditions may be degraded.":"";alerts();set("ai",parseFloat(l[2]));
+ fetch("https://services.swpc.noaa.gov/products/summary/10cm-flux.json").then(function(r){return r.json()}).then(function(j){var o=Array.isArray(j)?j[0]:j,f=parseFloat(o.flux!=null?o.flux:o.Flux);set("sfi",f);SOL.sfi=isNaN(f)?null:f;bands()}).catch(bad);
+ fetch("https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json").then(function(r){return r.json()}).then(function(j){var l=j[j.length-1],k=parseFloat(Array.isArray(l)?l[1]:l.Kp);set("kp",k);SOL.kp=isNaN(k)?null:k;bands();AL.kp=k>=5?"Geomagnetic storm (Kp "+k+"). HF conditions may be degraded.":"";alerts();set("ai",parseFloat(Array.isArray(l)?l[2]:l.a_running));
   $("solnote").textContent=isNaN(k)?"":k<3?"Geomagnetic field quiet. Good for HF.":k<5?"Field unsettled. Expect some HF disturbance.":"Geomagnetic storm. HF may be degraded."}).catch(bad);
  fetch("https://services.swpc.noaa.gov/json/goes/primary/xrays-6-hour.json").then(function(r){return r.json()}).then(function(j){var v=0;j.forEach(function(r){if(r.energy==="0.1-0.8nm"&&r.flux>0)v=r.flux});
   AL.xr=v>=1e-5?"Solar flare in progress: "+(v>=1e-4?"X"+(v/1e-4).toFixed(1):"M"+(v/1e-5).toFixed(1))+" class. Shortwave fadeouts likely on the sunlit side of Earth.":"";alerts()}).catch(function(){})
