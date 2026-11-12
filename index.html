@@ -12,7 +12,11 @@ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:en
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif}
-main{max-width:720px;margin:0 auto;padding:14px;display:grid;gap:12px}
+main{max-width:1200px;margin:0 auto;padding:14px;display:grid;gap:12px}
+#gate{max-width:480px}
+#app{display:block;columns:340px;column-gap:12px}
+#app .card{break-inside:avoid;margin-bottom:12px}
+#app>.alert{column-span:all;margin-bottom:12px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
 .row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 h1{font-size:15px;margin:0;color:var(--acc);letter-spacing:.08em}
@@ -35,6 +39,7 @@ body.red button.on{background:var(--acc);color:#0e0404}
 body.red canvas,body.red #bands{filter:grayscale(1) sepia(1) saturate(5) hue-rotate(-40deg) brightness(.6)}
 body.red .alert{background:#2a0b0b}
 @keyframes fl{50%{background:#5a3a3a}}
+@media(min-width:760px){.big{font-size:56px}.big.loc{font-size:40px}}
 ul{margin:8px 0 0;padding:0;list-style:none;font:14px ui-monospace,Menlo,Consolas,monospace}
 </style>
 </head>
@@ -61,10 +66,10 @@ ul{margin:8px 0 0;padding:0;list-style:none;font:14px ui-monospace,Menlo,Consola
 <div class="card">
  <div class="row"><h1 id="cs">KF5WZD</h1><span><button id="rd">Red mode</button> <button id="h12">24h</button></span></div>
  <div class="lbl" style="margin-top:8px">UTC</div>
- <div class="big utc" id="utc">19:05:23</div>
+ <div class="big utc" id="utc">21:27:33</div>
  <div class="dim" id="utcd">Thu, 12 Nov 2026</div>
  <div class="row" style="margin-top:12px"><span class="lbl" id="loclbl">Local · America/Chicago</span><span id="off" style="color:var(--acc);font-weight:600;font-size:18px">−6 hours from UTC</span></div>
- <div class="big loc" id="loc">13:05:23</div>
+ <div class="big loc" id="loc">15:27:33</div>
  <div class="dim" id="locd">Thu, Nov 12</div>
 </div>
 
@@ -82,7 +87,7 @@ ul{margin:8px 0 0;padding:0;list-style:none;font:14px ui-monospace,Menlo,Consola
  <div class="grid" style="margin-top:8px">
   <div><div class="dim">Sunrise</div><div class="wx" id="sr">06:22</div><div class="dim" id="sr2">12:22Z UTC</div></div>
   <div><div class="dim">Sunset</div><div class="wx" id="ss">16:53</div><div class="dim" id="ss2">22:53Z UTC</div></div>
-  <div><div class="dim">Daylight</div><div class="wx" id="dlen">10h 31m</div></div>
+  <div><div class="dim">Daylight</div><div class="wx" id="dlen">10h 30m</div></div>
  </div>
 </div>
 
@@ -97,7 +102,7 @@ ul{margin:8px 0 0;padding:0;list-style:none;font:14px ui-monospace,Menlo,Consola
 </div>
 
 <div class="card">
- <div class="row"><span class="lbl">Greyline map</span><span class="dim" id="mapinfo">Updated 19:05Z</span></div>
+ <div class="row"><span class="lbl">Greyline map</span><span class="dim" id="mapinfo">Updated 21:28Z</span></div>
  <canvas id="map" width="720" height="360" style="width:100%;height:auto;display:block;border-radius:9px;margin-top:8px"></canvas>
  <div class="dim" style="font-size:13px;margin-top:8px">Amber band = grey line (twilight). Yellow dot = sun overhead, blue dot = your station. Land outlines are simplified.</div>
 </div>
@@ -122,7 +127,7 @@ ul{margin:8px 0 0;padding:0;list-style:none;font:14px ui-monospace,Menlo,Consola
 
 <div class="card">
  <div class="lbl" style="margin-bottom:8px">World clocks</div>
- <div class="grid" id="tzs" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))"><div><select data-i="0" style="width:100%"><option value="UTC">UTC</option><option value="Europe/London" selected="">London</option><option value="Europe/Berlin">Berlin</option><option value="Europe/Moscow">Moscow</option><option value="Asia/Dubai">Dubai</option><option value="Asia/Kolkata">India</option><option value="Asia/Tokyo">Tokyo</option><option value="Australia/Sydney">Sydney</option><option value="Pacific/Auckland">Auckland</option><option value="Pacific/Honolulu">Honolulu</option><option value="America/Los_Angeles">Los Angeles</option><option value="America/Chicago">Chicago</option><option value="America/New_York">New York</option><option value="America/Sao_Paulo">São Paulo</option><option value="Africa/Johannesburg">Johannesburg</option></select><div class="wx tzt" style="margin-top:6px">19:05</div><div class="dim tzd">Thu, Nov 12</div></div><div><select data-i="1" style="width:100%"><option value="UTC">UTC</option><option value="Europe/London">London</option><option value="Europe/Berlin">Berlin</option><option value="Europe/Moscow">Moscow</option><option value="Asia/Dubai">Dubai</option><option value="Asia/Kolkata">India</option><option value="Asia/Tokyo" selected="">Tokyo</option><option value="Australia/Sydney">Sydney</option><option value="Pacific/Auckland">Auckland</option><option value="Pacific/Honolulu">Honolulu</option><option value="America/Los_Angeles">Los Angeles</option><option value="America/Chicago">Chicago</option><option value="America/New_York">New York</option><option value="America/Sao_Paulo">São Paulo</option><option value="Africa/Johannesburg">Johannesburg</option></select><div class="wx tzt" style="margin-top:6px">04:05</div><div class="dim tzd">Fri, Nov 13</div></div><div><select data-i="2" style="width:100%"><option value="UTC">UTC</option><option value="Europe/London">London</option><option value="Europe/Berlin">Berlin</option><option value="Europe/Moscow">Moscow</option><option value="Asia/Dubai">Dubai</option><option value="Asia/Kolkata">India</option><option value="Asia/Tokyo">Tokyo</option><option value="Australia/Sydney" selected="">Sydney</option><option value="Pacific/Auckland">Auckland</option><option value="Pacific/Honolulu">Honolulu</option><option value="America/Los_Angeles">Los Angeles</option><option value="America/Chicago">Chicago</option><option value="America/New_York">New York</option><option value="America/Sao_Paulo">São Paulo</option><option value="Africa/Johannesburg">Johannesburg</option></select><div class="wx tzt" style="margin-top:6px">06:05</div><div class="dim tzd">Fri, Nov 13</div></div></div>
+ <div class="grid" id="tzs" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))"><div><select data-i="0" style="width:100%"><option value="UTC">UTC</option><option value="Europe/London" selected="">London</option><option value="Europe/Berlin">Berlin</option><option value="Europe/Moscow">Moscow</option><option value="Asia/Dubai">Dubai</option><option value="Asia/Kolkata">India</option><option value="Asia/Tokyo">Tokyo</option><option value="Australia/Sydney">Sydney</option><option value="Pacific/Auckland">Auckland</option><option value="Pacific/Honolulu">Honolulu</option><option value="America/Los_Angeles">Los Angeles</option><option value="America/Chicago">Chicago</option><option value="America/New_York">New York</option><option value="America/Sao_Paulo">São Paulo</option><option value="Africa/Johannesburg">Johannesburg</option></select><div class="wx tzt" style="margin-top:6px">21:27</div><div class="dim tzd">Thu, Nov 12</div></div><div><select data-i="1" style="width:100%"><option value="UTC">UTC</option><option value="Europe/London">London</option><option value="Europe/Berlin">Berlin</option><option value="Europe/Moscow">Moscow</option><option value="Asia/Dubai">Dubai</option><option value="Asia/Kolkata">India</option><option value="Asia/Tokyo" selected="">Tokyo</option><option value="Australia/Sydney">Sydney</option><option value="Pacific/Auckland">Auckland</option><option value="Pacific/Honolulu">Honolulu</option><option value="America/Los_Angeles">Los Angeles</option><option value="America/Chicago">Chicago</option><option value="America/New_York">New York</option><option value="America/Sao_Paulo">São Paulo</option><option value="Africa/Johannesburg">Johannesburg</option></select><div class="wx tzt" style="margin-top:6px">06:27</div><div class="dim tzd">Fri, Nov 13</div></div><div><select data-i="2" style="width:100%"><option value="UTC">UTC</option><option value="Europe/London">London</option><option value="Europe/Berlin">Berlin</option><option value="Europe/Moscow">Moscow</option><option value="Asia/Dubai">Dubai</option><option value="Asia/Kolkata">India</option><option value="Asia/Tokyo">Tokyo</option><option value="Australia/Sydney" selected="">Sydney</option><option value="Pacific/Auckland">Auckland</option><option value="Pacific/Honolulu">Honolulu</option><option value="America/Los_Angeles">Los Angeles</option><option value="America/Chicago">Chicago</option><option value="America/New_York">New York</option><option value="America/Sao_Paulo">São Paulo</option><option value="Africa/Johannesburg">Johannesburg</option></select><div class="wx tzt" style="margin-top:6px">08:27</div><div class="dim tzd">Fri, Nov 13</div></div></div>
 </div>
 
 <div class="card">
