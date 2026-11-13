@@ -30,7 +30,7 @@ main{max-width:1200px;margin:0 auto;padding:14px;display:grid;gap:12px}
 [data-k=passes]{order:1}[data-k=trk]{order:2}
 @media(max-width:899px){#app[data-t=sat]{grid-template-columns:minmax(0,1fr)}}
 @media(min-width:900px){[data-k=passes]{display:flex;flex-direction:column;height:calc(100vh - 100px);min-height:520px}[data-k=passes] #sat_list{flex:1;min-height:0;overflow-y:auto;align-content:start}[data-k=trk]{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:0 22px}[data-k=trk]>*{grid-column:1}[data-k=trk]>.row:first-child{grid-column:1/-1}[data-k=trk]>#trk_cv{grid-column:2;grid-row:2/span 4}}
-@media(min-width:900px){[data-k=solar] .grid{grid-template-columns:minmax(0,1fr);flex:1;align-content:space-evenly}[data-k=solar] .wx{font-size:44px}}
+@media(min-width:900px){[data-k=solar] .grid{grid-template-columns:repeat(3,minmax(0,1fr))}[data-k=solar] .wx{font-size:30px}}
 @media(min-width:900px){#gtbody{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr);gap:0 22px}#gtbody>div+div{border-top:0;padding-top:0;border-left:1px solid var(--line);padding-left:22px}}
 [data-k=clock]{text-align:center;border-color:var(--acc)}
 @media(max-width:899px){#app[data-t=main],#app[data-t=prop]{grid-template-columns:minmax(0,1fr)}[data-k=clock]{order:1}[data-k=sun]{order:2}[data-k=tz]{order:3}[data-k=map]{order:1}[data-k=solar]{order:2}[data-k=grid]{order:3}}
@@ -122,6 +122,7 @@ ul{margin:8px 0 0;padding:0;list-style:none;font:14px ui-monospace,Menlo,Consola
   <div><div class="dim">Kp index</div><div class="wx" id="kp">--</div></div>
   <div><div class="dim">A index</div><div class="wx" id="ai">--</div></div>
  </div>
+ <div id="hfwrap" style="margin-top:12px"><div class="lbl" style="margin-bottom:6px">HF conditions by hour (UTC)</div><canvas id="hf_cv" width="400" height="240" style="width:100%;height:auto;display:block"></canvas><div class="row" style="flex-wrap:nowrap;gap:8px;font-size:12px;margin-top:6px"><span class="dim">Worst</span><i style="flex:1;height:8px;border-radius:4px;background:linear-gradient(90deg,#0a0c10 0%,#e62828 14%,#ff8c1e 30%,#ffe132 45%,#28d250 60%,#3278ff 75%,#5537d7 88%,#b05aff 100%)"></i><span class="dim">Best</span></div><div class="dim" style="font-size:12px;margin-top:4px">Estimated from sunlight at your station, solar flux and Kp. A rough guide, not a forecast.</div></div>
  <div class="dim" id="solnote" style="margin-top:8px;font-size:13px"></div>
 </div>
 
@@ -389,7 +390,7 @@ function bands(){if(!BANDS)return;var cls=D.cls||2,h="",t;
  if(openB!==null){var b=BANDS[openB],sg=b[CK[cls]]||[];
   t="<b>"+b.n+"</b> ("+b.lo+"–"+b.hi+" MHz). "+(sg.length?CL[cls]+": "+sg.map(function(s){return CN[s[2]]+" "+s[0].toFixed(3)+"–"+s[1].toFixed(3)}).join(", "):"No "+CL[cls]+" privileges on this band")+". Common: "+b.f+(b.v?".":". Estimate: "+CT[cond(b)]+".")}
  else t=ST.el===null?"Set a location for condition estimates. Tap a band for details.":"Estimated for your station: "+(ST.el>0?"daytime":"nighttime")+", SFI "+(SOL.sfi==null?"n/a":SOL.sfi)+", Kp "+(SOL.kp==null?"n/a":SOL.kp)+". Tap a band for details.";
- $("bdet").innerHTML=t}
+ $("bdet").innerHTML=t;hf()}
 $("bands").onclick=function(e){var r=e.target.closest("[data-i]");if(r){var i=+r.dataset.i;openB=openB===i?null:i;bands()}};
 $("cls").onclick=function(e){var c=+e.target.dataset.c;if(c){D.cls=c;save();bands()}};
 var CP=["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
@@ -548,6 +549,18 @@ Object.keys(TABS).forEach(function(id){var c=$(id).closest(".card");c.dataset.ta
 $("tabs").onclick=function(e){var t=e.target.dataset.t;if(t)showTab(t)};
 if(D.gt)gtShow(D.gt);else gtDraw();radar();
 showTab(D.tab||"main");trkDraw(null,null,false);
+function bscore(b,el){var sf=SOL.sfi==null?100:SOL.sfi,kp=SOL.kp==null?1:SOL.kp,f=Math.max(0,Math.min(1,(el+6)/12)),adj=b.m[2]*Math.max(-1.5,Math.min(1.5,(sf-100)/50)),nt=b.m[1]+adj*.4,dy=b.m[0]+adj,s=nt+(dy-nt)*f-(kp>=5?1:kp>=4?.5:0);return Math.max(0,Math.min(1,(s+.3)/2.6))}
+var RS=[[0,10,12,16],[.14,230,40,40],[.3,255,140,30],[.45,255,225,50],[.6,40,210,80],[.75,50,120,255],[.88,85,55,215],[1,176,90,255]];
+function ramp(v){for(var i=1;i<RS.length;i++)if(v<=RS[i][0]){var a=RS[i-1],b=RS[i],f=(v-a[0])/(b[0]-a[0]);return"rgb("+Math.round(a[1]+(b[1]-a[1])*f)+","+Math.round(a[2]+(b[2]-a[2])*f)+","+Math.round(a[3]+(b[3]-a[3])*f)+")"}return"rgb(176,90,255)"}
+function hf(){var c=$("hf_cv");if(!c||!BANDS)return;var x=c.getContext("2d"),W=c.width,H=c.height,B=BANDS.filter(function(b){return !b.v}),L=44,T=28,cw=(W-L)/24,rh=(H-T-20)/B.length,R=Math.PI/180,h,
+ la=parseFloat(D.lat),lo=parseFloat(D.lon),has=!isNaN(la)&&!isNaN(lo),d0=new Date(),els=[];d0.setUTCHours(0,0,0,0);
+ for(h=0;h<24;h++){if(has){var s=sun(d0.getTime()+(h+.5)*36e5),sl=(720-(h+.5)*60-s.eot)/4;els.push(Math.asin(Math.sin(la*R)*Math.sin(s.dec)+Math.cos(la*R)*Math.cos(s.dec)*Math.cos((lo-sl)*R))/R)}else els.push(null)}
+ x.clearRect(0,0,W,H);x.font="13px sans-serif";x.textBaseline="middle";
+ B.forEach(function(b,i){x.fillStyle="rgba(219,229,240,.85)";x.textAlign="right";x.fillText(b.n,L-6,T+i*rh+rh/2);
+  for(var k=0;k<24;k++){var v=els[k]==null?0:bscore(b,els[k]);x.fillStyle=ramp(v);x.fillRect(L+k*cw+1,T+i*rh+1,cw-2,rh-2)}});
+ x.textAlign="center";x.fillStyle="rgba(219,229,240,.75)";for(h=0;h<24;h+=3)x.fillText(p2(h),L+h*cw+cw/2,H-8);
+ var n=new Date().getUTCHours();x.strokeStyle="#f2c879";x.lineWidth=2;x.strokeRect(L+n*cw,T-3,cw,B.length*rh+6);x.fillStyle="#f2c879";x.fillText("now",L+n*cw+cw/2,T-14);
+ if(!has){x.fillStyle="rgba(219,229,240,.9)";x.fillText("Set your location",L+(W-L)/2,T+B.length*rh/2)}}
 function gUI(){var m=$("g_mode").value;$("gl_lat").style.display=$("gl_lon").style.display=m==="ll"?"":"none";$("gl_grid").style.display=m==="grid"?"":"none";$("gl_gps").style.display=m==="gps"?"":"none"}
 $("g_mode").onchange=gUI;
 function enterApp(){$("gate").style.display="none";$("app").style.display="";fill();tick();weather();solar()}
