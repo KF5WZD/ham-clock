@@ -15,9 +15,31 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif}
 main{max-width:1200px;margin:0 auto;padding:14px;display:grid;gap:12px}
 #gate{max-width:480px}
-#app{display:block;columns:340px;column-gap:12px}
-#app .card{break-inside:avoid;margin-bottom:12px}
-#app>.alert{column-span:all;margin-bottom:12px}
+#app{display:grid;gap:12px;align-items:start;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
+#app[data-t=main]{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1fr)}
+#app[data-t=prop]{grid-template-columns:minmax(0,1fr) minmax(0,2.4fr);align-items:stretch}
+#app>.alert,#app>#tabs{grid-column:1/-1}
+#app>.alert{order:-2}
+#app>#tabs{order:-1}
+[data-k=sun]{order:1}[data-k=clock]{order:2}[data-k=tz]{order:3}[data-k=wx]{order:4;grid-column:1/-1}
+[data-k=solar]{order:1;display:flex;flex-direction:column;justify-content:space-between}[data-k=map]{order:2}[data-k=grid]{order:3;grid-column:1/-1}
+#gtbody{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+#gtbody>div+div{border-top:1px solid var(--line);padding-top:14px}
+#gtbody>div>.lbl:first-child{margin-top:0!important}
+#app[data-t=sat]{grid-template-columns:minmax(0,1fr) minmax(0,2fr);align-items:start}
+[data-k=passes]{order:1}[data-k=trk]{order:2}
+@media(max-width:899px){#app[data-t=sat]{grid-template-columns:minmax(0,1fr)}}
+@media(min-width:900px){[data-k=passes]{display:flex;flex-direction:column;height:calc(100vh - 100px);min-height:520px}[data-k=passes] #sat_list{flex:1;min-height:0;overflow-y:auto;align-content:start}[data-k=trk]{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:0 22px}[data-k=trk]>*{grid-column:1}[data-k=trk]>.row:first-child{grid-column:1/-1}[data-k=trk]>#trk_cv{grid-column:2;grid-row:2/span 4}}
+@media(min-width:900px){[data-k=solar] .grid{grid-template-columns:minmax(0,1fr);flex:1;align-content:space-evenly}[data-k=solar] .wx{font-size:44px}}
+@media(min-width:900px){#gtbody{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr);gap:0 22px}#gtbody>div+div{border-top:0;padding-top:0;border-left:1px solid var(--line);padding-left:22px}}
+[data-k=clock]{text-align:center;border-color:var(--acc)}
+@media(max-width:899px){#app[data-t=main],#app[data-t=prop]{grid-template-columns:minmax(0,1fr)}[data-k=clock]{order:1}[data-k=sun]{order:2}[data-k=tz]{order:3}[data-k=map]{order:1}[data-k=solar]{order:2}[data-k=grid]{order:3}}
+@media(min-width:900px){#app .big{font-size:min(7vw,76px)}#app .big.loc{font-size:min(4.4vw,46px)}}
+#wxbody{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px}
+#app .card{min-width:0}
+
+#tabs{display:flex;gap:6px}
+#tabs button{flex:1;padding:10px 4px;font-weight:600}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
 .row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 h1{font-size:15px;margin:0;color:var(--acc);letter-spacing:.08em}
@@ -37,7 +59,7 @@ label{display:grid;gap:4px;font-size:13px;color:var(--dim)}
 body.red{--bg:#0e0404;--card:#180707;--line:#3a1414;--tx:#d9473a;--dim:#8a3329;--utc:#e8604c;--acc:#d9473a;--ok:#d9473a;--bad:#d9473a}
 body.red button,body.red select,body.red input,body.red .links a{background:#0f0505}
 body.red button.on{background:var(--acc);color:#0e0404}
-body.red canvas,body.red #bands{filter:grayscale(1) sepia(1) saturate(5) hue-rotate(-40deg) brightness(.6)}
+body.red canvas,body.red #bands,body.red iframe{filter:grayscale(1) sepia(1) saturate(5) hue-rotate(-40deg) brightness(.6)}
 body.red .alert{background:#2a0b0b}
 @keyframes fl{50%{background:#5a3a3a}}
 @media(min-width:760px){.big{font-size:56px}.big.loc{font-size:40px}}
@@ -64,6 +86,7 @@ ul{margin:8px 0 0;padding:0;list-style:none;font:14px ui-monospace,Menlo,Consola
 </main>
 <main id="app" style="display:none">
 <div id="alert" class="alert" style="display:none"></div>
+<div id="tabs"><button data-t="main">Main</button><button data-t="prop">Prop &amp; Map</button><button data-t="sat">Satellites</button><button data-t="more">More</button></div>
 <div class="card">
  <div class="row"><div><div class="lbl" style="margin-bottom:2px">Zulu Shack</div><h1 id="cs">KF5WZD</h1></div><span><button id="rd">Red mode</button> <button id="h12">24h</button></span></div>
  <div class="lbl" style="margin-top:8px">UTC</div>
@@ -84,7 +107,7 @@ ul{margin:8px 0 0;padding:0;list-style:none;font:14px ui-monospace,Menlo,Consola
 
 
 <div class="card">
- <div class="row"><span class="lbl">Sun · today</span><span class="dim" id="sunloc"></span></div>
+ <div class="row"><span class="lbl">Today</span><span class="dim" id="sunloc"></span></div>
  <div class="grid" style="margin-top:8px">
   <div><div class="dim">Sunrise</div><div class="wx" id="sr">--</div><div class="dim" id="sr2"></div></div>
   <div><div class="dim">Sunset</div><div class="wx" id="ss">--</div><div class="dim" id="ss2"></div></div>
@@ -155,6 +178,17 @@ ul{margin:8px 0 0;padding:0;list-style:none;font:14px ui-monospace,Menlo,Consola
  <div class="dim" style="font-size:12px;margin-top:8px">Uses GPS and the phone’s compass and tilt sensors. iPhone: hold the phone flat for a moment after starting so it can find north. Enter your magnetic declination (look it up for your area) to correct the compass.</div>
 </div>
 
+<div class="card">
+ <div class="lbl" style="margin-bottom:8px">Grid locator</div>
+ <div class="row" style="flex-wrap:nowrap"><input id="gt_in" autocapitalize="characters" autocomplete="off" placeholder="Grid (e.g. EM12ab)" style="flex:1;min-width:0"><button id="gt_go" class="on">Show</button></div>
+ <canvas id="gt_cv" width="720" height="360" style="width:100%;height:auto;display:block;border-radius:9px;margin-top:10px"></canvas>
+ <div class="row" style="margin-top:8px;justify-content:flex-start"><button id="gt_zm">Zoom in</button><button id="gt_bt">Use as beam target</button></div>
+ <div class="dim" id="gt_n" style="font-size:13px;margin-top:8px;white-space:pre-line"></div>
+ <div class="lbl" style="margin:14px 0 8px">Find a grid by city or town</div>
+ <div class="row" style="flex-wrap:nowrap"><input id="gt_city" autocomplete="off" placeholder="City or town (e.g. Jackson, Mississippi)" style="flex:1;min-width:0"><button id="gt_find" class="on">Find</button></div>
+ <div id="gt_res" class="dim" style="margin-top:8px;display:grid;gap:6px;font-size:14px"></div>
+</div>
+
 <div class="card links">
  <div class="lbl" style="margin-bottom:8px">Links</div>
  <div class="grid">
@@ -198,7 +232,7 @@ function save(){try{localStorage.setItem("hc",JSON.stringify(D))}catch(e){}}
 var p2=function(n){return String(n).padStart(2,"0")};
 function fmt(d,utc,h12){var h=utc?d.getUTCHours():d.getHours(),m=utc?d.getUTCMinutes():d.getMinutes(),s=utc?d.getUTCSeconds():d.getSeconds(),sf="";
  if(h12){sf=h>=12?" PM":" AM";h=h%12||12}else h=p2(h);return h+":"+p2(m)+":"+p2(s)+sf}
-var ST={el:null},SAT=null,TRK=null,AL={kp:"",xr:""},SOL={sfi:null,kp:null},openB=null;
+var ST={el:null},SAT=null,TRK=null,GT=null,AL={kp:"",xr:""},SOL={sfi:null,kp:null},openB=null;
 function tick(){var d=new Date();
  $("utc").textContent=fmt(d,true,false);
  $("utcd").textContent=d.toUTCString().slice(0,16);
@@ -233,7 +267,7 @@ function show(t,h,w,desc){var F=D.u==="F";
 function fail(){$("wx").textContent="Weather unavailable";
  $("wx2").textContent="Needs a network connection and a lat/lon in Settings. Some hosts (including this preview) block outside requests; hosted or downloaded copies work."}
 function weather(){
- sunmap();beam();satCalc();
+ sunmap();beam();satCalc();gtDraw();radar();
  $("wsrc").textContent=SRC[D.src]||"";
  $("grid").textContent=D.lat&&D.lon?"Grid "+grid(D.lat,D.lon)+"  ·  "+(+D.lat).toFixed(2)+", "+(+D.lon).toFixed(2):"Set lat/lon in Settings for weather and grid square";
  var F=D.u==="F";
@@ -411,9 +445,9 @@ function satCalc(){if(!SAT)return;var box=$("sat_list");
  (D.sats||[]).forEach(function(n){var rec=recOf(n);if(!rec)return;var cur=null,c=0;
   for(var k=0;k<=2880;k++){var d=new Date(now+k*30000),l=look(rec,d,ob);if(!l)continue;
    if(l.el>=0){if(!cur)cur={n:n,aos:d,aaz:l.az,max:l.el,maz:l.az,ip:k===0};if(l.el>cur.max){cur.max=l.el;cur.maz=l.az}cur.los=d;cur.laz=l.az}
-   else if(cur){if(cur.max>=10||cur.ip){all.push(cur);c++}cur=null;if(c>=3)break}}
+   else if(cur){if(cur.max>=10||cur.ip){all.push(cur);c++}cur=null;if(c>=6)break}}
   if(cur&&(cur.max>=10||cur.ip))all.push(cur)});
- all.sort(function(a,b){return a.aos-b.aos});SAT.pass=all.slice(0,8);
+ all.sort(function(a,b){return a.aos-b.aos});SAT.pass=all.slice(0,24);
  var f=function(d){return hm(d.getUTCHours()*60+d.getUTCMinutes(),1)+" / "+hm(d.getHours()*60+d.getMinutes())},cn=function(a){return Math.round(a)+"° "+CP[Math.round(a/22.5)%16]};
  box.innerHTML=SAT.pass.length?SAT.pass.map(function(p,i){var dd=p.aos.toDateString()!==new Date().toDateString()?p.aos.toLocaleDateString([],{weekday:"short"})+" ":"";
   return'<div data-p="'+i+'" style="padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);cursor:pointer"><b>'+sl(p.n)+'</b>'+(p.ip?' <span style="color:var(--ok)">in progress</span>':'')+'<div class="dim" style="font-size:13px">'+dd+f(p.aos)+' · '+Math.max(1,Math.round((p.los-p.aos)/60000))+' min · max '+Math.round(p.max)+'°</div><div class="dim" style="font-size:13px">Rises '+cn(p.aaz)+' → sets '+cn(p.laz)+'</div></div>'}).join(""):'<div class="dim">No passes above 10° in the next 24 hours for your selected satellites.</div>'}
@@ -433,7 +467,7 @@ function trkDraw(l,p,on){var c=$("trk_cv"),x=c.getContext("2d"),cx=150,cy=150,r=
  x.beginPath();x.moveTo(cx,cy-r);x.lineTo(cx,cy+r);x.moveTo(cx-r,cy);x.lineTo(cx+r,cy);x.stroke();
  x.fillText("N",cx,cy-r-4);x.fillText("S",cx,cy+r+13);x.fillText("E",cx+r+8,cy+4);x.fillText("W",cx-r-8,cy+4);
  function dot(q,col,rad){var rr=r*(90-Math.max(0,q.el))/90,t=q.az*Math.PI/180;x.beginPath();x.arc(cx+rr*Math.sin(t),cy-rr*Math.cos(t),rad,0,7);x.fillStyle=col;x.fill();x.strokeStyle="#fff";x.lineWidth=2;x.stroke()}
- if(p)dot(p,"#7fb2e5",6);dot(l,on?"#7fd4a0":"#f2c879",8)}
+ if(p)dot(p,"#7fb2e5",6);if(l)dot(l,on?"#7fd4a0":"#f2c879",8)}
 function trkTick(){if(!TRK.on)return;var ob=obs(),n=$("trk_sat").value,st=$("trk_stat"),rec=n&&typeof satellite!=="undefined"?recOf(n):null;
  $("trk_pos").textContent=TRK.pos?"GPS ±"+Math.round(TRK.pos.acc)+" m":"Saved location";
  if(!ob||!rec){st.textContent="Needs a location, a target and orbit data";return}
@@ -446,7 +480,7 @@ function trkTick(){if(!TRK.on)return;var ob=obs(),n=$("trk_sat").value,st=$("trk
  st.style.color=on?"var(--ok)":"";st.style.borderColor=on?"var(--ok)":"var(--line)";
  $("trk_info").textContent=info+" · phone "+Math.round(p.az)+"°, "+Math.round(p.el)+"°"+(TRK.cal?"":" · hold phone flat to set north");trkDraw(l,p,on)}
 function trkStop(){TRK.on=false;clearInterval(TRK.iv);if(TRK.wid!=null)navigator.geolocation.clearWatch(TRK.wid);TRK.wid=null;TRK.pos=null;window.removeEventListener("deviceorientationabsolute",onOri,true);window.removeEventListener("deviceorientation",onOri,true);
- $("trk_go").textContent="Start tracker";$("trk_stat").textContent="Tracker off";$("trk_stat").style.color="";$("trk_pos").textContent=""}
+ $("trk_go").textContent="Start tracker";$("trk_stat").textContent="Tracker off";$("trk_stat").style.color="";$("trk_pos").textContent="";trkDraw(null,null,false)}
 $("trk_go").onclick=function(){if(TRK.on){trkStop();return}var msg=$("trk_msg");msg.textContent="";
  function go(){TRK={on:true,abs:false,cal:false,off:0,al:null,pos:null,wid:null};$("trk_go").textContent="Stop tracker";
   if(navigator.geolocation)TRK.wid=navigator.geolocation.watchPosition(function(q){TRK.pos={la:q.coords.latitude,lo:q.coords.longitude,acc:q.coords.accuracy}},function(){TRK.pos=null},{enableHighAccuracy:true,maximumAge:5000});
@@ -457,6 +491,63 @@ $("trk_go").onclick=function(){if(TRK.on){trkStop();return}var msg=$("trk_msg");
 function satInit(){try{var c=JSON.parse(localStorage.getItem("hc_tle")||"null");if(c&&c.x)satLoad(c.x,c.t)}catch(e){}
  $("trk_mode").value=D.tm||"top";$("trk_tol").value=D.tt||"10";$("trk_dec").value=D.td||"";satUI();satCalc();if(!SAT.t||Date.now()-SAT.t>864e5)satFetch()}
 satInit();
+GT={b:null,zoom:false,res:[]};
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function gbox(s){s=(s||"").trim();if(!/^[A-R]{2}[0-9]{2}([A-X]{2})?$/i.test(s))return null;s=s.toUpperCase();
+ var lo=-180+(s.charCodeAt(0)-65)*20+(+s[2])*2,la=-90+(s.charCodeAt(1)-65)*10+(+s[3]),w=2,h=1;
+ if(s.length===6){lo+=(s.charCodeAt(4)-65)/12;la+=(s.charCodeAt(5)-65)/24;w=1/12;h=1/24}
+ return{lo:lo,la:la,w:w,h:h,c:[la+h/2,lo+w/2],g:s.slice(0,4)+s.slice(4).toLowerCase()}}
+function gcb(la1,lo1,la2,lo2){var R=Math.PI/180,q1=la1*R,q2=la2*R,dl=(lo2-lo1)*R,a=Math.pow(Math.sin((q2-q1)/2),2)+Math.cos(q1)*Math.cos(q2)*Math.pow(Math.sin(dl/2),2);
+ return{d:12742*Math.asin(Math.min(1,Math.sqrt(a))),b:(Math.atan2(Math.sin(dl)*Math.cos(q2),Math.cos(q1)*Math.sin(q2)-Math.sin(q1)*Math.cos(q2)*Math.cos(dl))/R+360)%360}}
+function gtDraw(){if(!GT)return;var b=GT.b,c=$("gt_cv"),x=c.getContext("2d"),W=c.width,H=c.height,v=b&&GT.zoom?[b.c[1]-18,b.c[1]+18,b.c[0]-9,b.c[0]+9]:[-180,180,-90,90],
+ X=function(l){return(l-v[0])/(v[1]-v[0])*W},Y=function(l){return(v[3]-l)/(v[3]-v[2])*H},i;
+ x.fillStyle="#172233";x.fillRect(0,0,W,H);
+ function poly(A,col){x.fillStyle=col;x.strokeStyle="#9bbbe6";x.lineWidth=1.2;x.lineJoin="round";A.forEach(function(p){x.beginPath();for(var k=0;k<p.length;k+=2){var px=X(p[k]),py=Y(p[k+1]);if(k)x.lineTo(px,py);else x.moveTo(px,py)}x.closePath();x.fill();x.stroke()})}
+ poly(LAND||[],"#3a5a8c");poly(SEAS||[],"#172233");
+ x.strokeStyle="rgba(219,229,240,.15)";x.lineWidth=1;var st=GT.zoom?5:30;
+ for(i=Math.ceil(v[0]/st)*st;i<=v[1];i+=st){x.beginPath();x.moveTo(X(i),0);x.lineTo(X(i),H);x.stroke()}
+ for(i=Math.ceil(v[2]/st)*st;i<=v[3];i+=st){x.beginPath();x.moveTo(0,Y(i));x.lineTo(W,Y(i));x.stroke()}
+ function mk(lo,la,col,r){x.beginPath();x.arc(X(lo),Y(la),r,0,7);x.fillStyle=col;x.fill();x.strokeStyle="#fff";x.lineWidth=2;x.stroke()}
+ var la=parseFloat(D.lat),lo=parseFloat(D.lon);if(!isNaN(la)&&!isNaN(lo))mk(lo,la,"#7fb2e5",7);
+ if(b){x.fillStyle="rgba(242,200,121,.35)";x.strokeStyle="#f2c879";x.lineWidth=2;x.beginPath();x.rect(X(b.lo),Y(b.la+b.h),Math.max(4,X(b.lo+b.w)-X(b.lo)),Math.max(4,Y(b.la)-Y(b.la+b.h)));x.fill();x.stroke();x.beginPath();x.arc(X(b.c[1]),Y(b.c[0]),GT.zoom?12:14,0,7);x.stroke()}}
+function gtShow(s){var b=gbox(s),n=$("gt_n");if(!b){n.textContent="Enter a grid like EM12 or EM12ab.";return}
+ GT.b=b;$("gt_in").value=b.g;D.gt=b.g;save();
+ var la=parseFloat(D.lat),lo=parseFloat(D.lon),t=b.g+" \u00b7 center "+Math.abs(b.c[0]).toFixed(3)+"\u00b0"+(b.c[0]<0?"S":"N")+", "+Math.abs(b.c[1]).toFixed(3)+"\u00b0"+(b.c[1]<0?"W":"E")+" \u00b7 "+(b.w===2?"2\u00b0 \u00d7 1\u00b0 square":"5\u2032 \u00d7 2.5\u2032 square");
+ if(!isNaN(la)&&!isNaN(lo)){var r=gcb(la,lo,b.c[0],b.c[1]);t+="\n"+Math.round(r.d).toLocaleString()+" km / "+Math.round(r.d*.621371).toLocaleString()+" mi from you, bearing "+Math.round(r.b)+"\u00b0 "+CP[Math.round(r.b/22.5)%16]}
+ n.textContent=t;gtDraw()}
+$("gt_go").onclick=function(){gtShow($("gt_in").value)};
+$("gt_in").onkeydown=function(e){if(e.key==="Enter")$("gt_go").click()};
+$("gt_zm").onclick=function(){GT.zoom=!GT.zoom;$("gt_zm").textContent=GT.zoom?"World view":"Zoom in";gtDraw()};
+$("gt_bt").onclick=function(){if(!GT.b)return;D.tgt=GT.b.g;save();$("bm_in").value=D.tgt;beam();$("gt_n").textContent+="\nSet as your beam target."};
+$("gt_find").onclick=function(){var q=$("gt_city").value.trim(),r=$("gt_res");if(!q)return;var pt=q.split(","),nm=pt[0].trim(),f=pt.slice(1).join(" ").trim().toLowerCase();r.textContent="Searching\u2026";
+ fetch("https://geocoding-api.open-meteo.com/v1/search?count=10&language=en&format=json&name="+encodeURIComponent(nm)).then(function(x){return x.json()}).then(function(d){var a=d.results||[];
+  if(f){var m=a.filter(function(p){return((p.admin1||"")+" "+(p.country||"")+" "+(p.country_code||"")).toLowerCase().indexOf(f)>-1});if(m.length)a=m}
+  a=a.slice(0,6);if(!a.length){r.textContent="No match. Try a larger nearby town.";return}GT.res=a;
+  r.innerHTML=a.map(function(p,i){return'<div data-i="'+i+'" style="padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);cursor:pointer;color:var(--tx)">'+esc(p.name)+(p.admin1?", "+esc(p.admin1):"")+(p.country?", "+esc(p.country):"")+' <b style="color:var(--utc)">\u2192 '+grid(p.latitude,p.longitude)+'</b></div>'}).join("")}).catch(function(){r.textContent="City lookup needs an internet connection."})};
+$("gt_city").onkeydown=function(e){if(e.key==="Enter")$("gt_find").click()};
+$("gt_res").onclick=function(e){var r=e.target.closest("[data-i]");if(!r)return;var p=GT.res[+r.dataset.i];gtShow(grid(p.latitude,p.longitude))};
+(function(){var g=$("gt_in").closest(".card"),b=$("bm_in").closest(".card");if(g===b)return;var k=[].slice.call(g.children),m=[].slice.call(b.children),w=document.createElement("div");w.id="gtbody";
+ function sec(a){var d=document.createElement("div");a.forEach(function(n){d.appendChild(n)});w.appendChild(d)}
+ sec(k.slice(0,5));sec(k.slice(5,8));sec(m);g.appendChild(w);b.remove()})();
+(function(){var c=$("wx").closest(".card"),body=document.createElement("div"),info=document.createElement("div"),rad=document.createElement("div");
+ body.id="wxbody";info.style.flex="1 1 240px";rad.id="radar";rad.style.flex="3 1 320px";rad.style.minWidth="0";
+ [$("wx"),$("wx2"),$("grid")].forEach(function(n){info.appendChild(n)});
+ info.insertAdjacentHTML("beforeend",'<button id="rdr_t" style="margin-top:10px">Hide radar</button>');
+ body.appendChild(info);body.appendChild(rad);c.appendChild(body)})();
+function radar(){var r=$("radar");if(!r)return;var la=parseFloat(D.lat),lo=parseFloat(D.lon),t=$("rdr_t");
+ if(D.radar===false){r.innerHTML="";r.dataset.u="";t.textContent="Show live radar";return}
+ t.textContent="Hide radar";
+ if(isNaN(la)||isNaN(lo)){r.innerHTML='<div class="dim">Set your location to see radar.</div>';r.dataset.u="";return}
+ var u="https://embed.windy.com/embed2.html?lat="+la.toFixed(2)+"&lon="+lo.toFixed(2)+"&detailLat="+la.toFixed(2)+"&detailLon="+lo.toFixed(2)+"&width=650&height=380&zoom=7&level=surface&overlay=radar&product=radar&menu=&message=&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1";
+ if(r.dataset.u===u)return;r.dataset.u=u;
+ r.innerHTML='<iframe src="'+u+'" title="Live radar" loading="lazy" style="width:100%;height:380px;border:0;border-radius:9px"></iframe><div class="dim" style="font-size:12px;margin-top:4px">Live radar by Windy.com. Needs an internet connection.</div>'}
+$("rdr_t").onclick=function(){D.radar=(D.radar===false);save();radar()};
+var TABS={utc:["main","clock"],wx:["main","wx"],tzs:["main","tz"],sunloc:["main","sun"],sfi:["prop","solar"],map:["prop","map"],gt_in:["prop","grid"],bands:["more"],sat_list:["sat","passes"],trk_go:["sat","trk"],s_call:["more"]};
+function showTab(t){D.tab=t;save();$("app").dataset.t=t;document.querySelectorAll("#app .card").forEach(function(c){c.style.display=c.dataset.tab===t?"":"none"});Array.prototype.forEach.call($("tabs").children,function(b){b.classList.toggle("on",b.dataset.t===t)})}
+Object.keys(TABS).forEach(function(id){var c=$(id).closest(".card");c.dataset.tab=TABS[id][0];if(TABS[id][1])c.dataset.k=TABS[id][1]});document.querySelector(".card.links").dataset.tab="more";
+$("tabs").onclick=function(e){var t=e.target.dataset.t;if(t)showTab(t)};
+if(D.gt)gtShow(D.gt);else gtDraw();radar();
+showTab(D.tab||"main");trkDraw(null,null,false);
 function gUI(){var m=$("g_mode").value;$("gl_lat").style.display=$("gl_lon").style.display=m==="ll"?"":"none";$("gl_grid").style.display=m==="grid"?"":"none";$("gl_gps").style.display=m==="gps"?"":"none"}
 $("g_mode").onchange=gUI;
 function enterApp(){$("gate").style.display="none";$("app").style.display="";fill();tick();weather();solar()}
