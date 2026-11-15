@@ -233,7 +233,7 @@ function save(){try{localStorage.setItem("hc",JSON.stringify(D))}catch(e){}}
 var p2=function(n){return String(n).padStart(2,"0")};
 function fmt(d,utc,h12){var h=utc?d.getUTCHours():d.getHours(),m=utc?d.getUTCMinutes():d.getMinutes(),s=utc?d.getUTCSeconds():d.getSeconds(),sf="";
  if(h12){sf=h>=12?" PM":" AM";h=h%12||12}else h=p2(h);return h+":"+p2(m)+":"+p2(s)+sf}
-var ST={el:null},SAT=null,TRK=null,GT=null,AL={kp:"",xr:""},SOL={sfi:null,kp:null},openB=null;
+var ST={el:null},SAT=null,TRK=null,GT=null,TRX=null,AL={kp:"",xr:""},SOL={sfi:null,kp:null},openB=null;
 function tick(){var d=new Date();
  $("utc").textContent=fmt(d,true,false);
  $("utcd").textContent=d.toUTCString().slice(0,16);
@@ -426,15 +426,15 @@ function parseTLE(x){var L=x.split(/\r?\n/).map(function(s){return s.trim()}).fi
 function satLoad(x,t){var p=parseTLE(x);if(!p.n.length)return false;SAT.tle=p.o;SAT.names=p.n;SAT.t=t;SAT.rec={};
  try{localStorage.setItem("hc_tle",JSON.stringify({t:t,x:x}))}catch(e){}
  if(!D.sats){D.sats=[];[/ISS \(ZARYA\)/,/\(SO-50\)/,/\(RS-44\)/,/\(AO-7\)/].forEach(function(r){var f=p.n.filter(function(n){return r.test(n)})[0];if(f)D.sats.push(f)});save()}
- satUI();satCalc();return true}
+ repAdd(false);satUI();satCalc();return true}
 function satFetch(){$("sat_n").textContent="Downloading orbit data…";
- fetch("https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle").then(function(r){if(!r.ok)throw 1;return r.text()}).then(function(x){if(!satLoad(x,Date.now()))throw 1;$("sat_n").textContent=""})
+ Promise.all([fetch("https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle").then(function(r){if(!r.ok)throw 1;return r.text()}),fetch("https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=tle").then(function(r){return r.ok?r.text():""}).catch(function(){return""})]).then(function(a){var x=a[0]+"\n"+a[1];if(!satLoad(x,Date.now()))throw 1;$("sat_n").textContent=""})
  .catch(function(){$("sat_n").textContent=SAT.t?"Couldn’t refresh. Using saved orbit data.":"Couldn’t download orbit data. This works on a hosted or downloaded copy with a network connection, or paste TLEs below."})}
-function satUI(){var h='<option value="">Add a satellite…</option>',f=D.sats||[];
+function satUI(){var op=null;try{op=$("sat_fav").querySelector("details");op=op&&op.open}catch(e){}var h='<option value="">Add a satellite…</option>',f=D.sats||[];
  SAT.names.forEach(function(n){if(f.indexOf(n)<0)h+="<option>"+n+"</option>"});$("sat_add").innerHTML=h;
- $("sat_fav").innerHTML=f.map(function(n,i){return'<button data-r="'+i+'" style="padding:4px 10px;font-size:13px">'+sl(n)+' ×</button>'}).join("");
+ $("sat_fav").innerHTML='<details'+(op?" open":"")+'><summary class="dim" style="font-size:13px;cursor:pointer">Tracking '+f.length+' satellites \u00b7 tap to edit</summary><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">'+f.map(function(n,i){return'<button data-r="'+i+'" style="padding:4px 10px;font-size:13px">'+esc(sl(n))+' \u00d7</button>'}).join("")+'</div></details>';
  var cur=D.ts;$("trk_sat").innerHTML=f.map(function(n){return'<option value="'+n+'"'+(n===cur?" selected":"")+'>'+sl(n)+'</option>'}).join("");
- $("satage").textContent=SAT.t?"Orbits "+Math.round((Date.now()-SAT.t)/36e5)+" h old":"No orbit data"}
+ $("satage").textContent=SAT.t?"Orbits "+Math.round((Date.now()-SAT.t)/36e5)+" h old":"No orbit data";trkFreq()}
 function look(rec,d,ob){var pv=satellite.propagate(rec,d);if(!pv||!pv.position)return null;var la=satellite.ecfToLookAngles(ob,satellite.eciToEcf(pv.position,satellite.gstime(d)));return{az:la.azimuth*180/Math.PI,el:la.elevation*180/Math.PI,rg:la.rangeSat}}
 function obs(){var la=TRK&&TRK.pos?TRK.pos.la:parseFloat(D.lat),lo=TRK&&TRK.pos?TRK.pos.lo:parseFloat(D.lon);return isNaN(la)||isNaN(lo)?null:{latitude:la*Math.PI/180,longitude:lo*Math.PI/180,height:0}}
 function recOf(n){if(!SAT.rec[n]&&SAT.tle[n])try{SAT.rec[n]=satellite.twoline2satrec(SAT.tle[n][0],SAT.tle[n][1])}catch(e){}return SAT.rec[n]}
@@ -444,7 +444,7 @@ function satCalc(){if(!SAT)return;var box=$("sat_list");
  if(!SAT.names.length){box.innerHTML='<div class="dim">Waiting for orbit data.</div>';return}
  var now=Date.now(),all=[];
  (D.sats||[]).forEach(function(n){var rec=recOf(n);if(!rec)return;var cur=null,c=0;
-  for(var k=0;k<=2880;k++){var d=new Date(now+k*30000),l=look(rec,d,ob);if(!l)continue;
+  for(var k=0;k<=1440;k++){var d=new Date(now+k*60000),l=look(rec,d,ob);if(!l)continue;
    if(l.el>=0){if(!cur)cur={n:n,aos:d,aaz:l.az,max:l.el,maz:l.az,ip:k===0};if(l.el>cur.max){cur.max=l.el;cur.maz=l.az}cur.los=d;cur.laz=l.az}
    else if(cur){if(cur.max>=10||cur.ip){all.push(cur);c++}cur=null;if(c>=6)break}}
   if(cur&&(cur.max>=10||cur.ip))all.push(cur)});
@@ -454,7 +454,7 @@ function satCalc(){if(!SAT)return;var box=$("sat_list");
   return'<div data-p="'+i+'" style="padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);cursor:pointer"><b>'+sl(p.n)+'</b>'+(p.ip?' <span style="color:var(--ok)">in progress</span>':'')+'<div class="dim" style="font-size:13px">'+dd+f(p.aos)+' · '+Math.max(1,Math.round((p.los-p.aos)/60000))+' min · max '+Math.round(p.max)+'°</div><div class="dim" style="font-size:13px">Rises '+cn(p.aaz)+' → sets '+cn(p.laz)+'</div></div>'}).join(""):'<div class="dim">No passes above 10° in the next 24 hours for your selected satellites.</div>'}
 $("sat_add").onchange=function(){var v=this.value;if(!v)return;D.sats=(D.sats||[]).concat(v).slice(0,10);save();satUI();satCalc()};
 $("sat_fav").onclick=function(e){var i=e.target.dataset.r;if(i==null)return;D.sats.splice(+i,1);save();satUI();satCalc()};
-$("sat_list").onclick=function(e){var r=e.target.closest("[data-p]");if(!r)return;D.ts=SAT.pass[+r.dataset.p].n;save();$("trk_sat").value=D.ts;$("trk_msg").textContent="Target: "+sl(D.ts)};
+$("sat_list").onclick=function(e){var r=e.target.closest("[data-p]");if(!r)return;D.ts=SAT.pass[+r.dataset.p].n;save();$("trk_sat").value=D.ts;trkFreq();$("trk_msg").textContent="Target: "+sl(D.ts)};
 $("sat_up").onclick=satFetch;
 $("sat_ps").onclick=function(){if(satLoad($("sat_tle").value,Date.now()))$("sat_n").textContent="Pasted orbit data loaded.";else $("sat_n").textContent="Couldn’t read that. Paste 3-line TLE sets (name, line 1, line 2)."};
 function onOri(e){if(e.type==="deviceorientationabsolute")TRK.abs=true;else if(TRK.abs)return;if(e.alpha==null)return;TRK.al=e.alpha;TRK.be=e.beta;TRK.ga=e.gamma;
@@ -488,9 +488,27 @@ $("trk_go").onclick=function(){if(TRK.on){trkStop();return}var msg=$("trk_msg");
   window.addEventListener("deviceorientationabsolute",onOri,true);window.addEventListener("deviceorientation",onOri,true);TRK.iv=setInterval(trkTick,200)}
  if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==="function")DeviceOrientationEvent.requestPermission().then(function(r){if(r==="granted")go();else msg.textContent="Motion sensor permission denied."}).catch(function(){msg.textContent="Motion sensors unavailable here."});
  else go()};
-["trk_sat","trk_mode","trk_tol","trk_dec"].forEach(function(id){$(id).onchange=function(){D.ts=$("trk_sat").value;D.tm=$("trk_mode").value;D.tt=$("trk_tol").value;D.td=$("trk_dec").value;save()}});
+["trk_sat","trk_mode","trk_tol","trk_dec"].forEach(function(id){$(id).onchange=function(){D.ts=$("trk_sat").value;D.tm=$("trk_mode").value;D.tt=$("trk_tol").value;D.td=$("trk_dec").value;save();trkFreq()}});
+var TRX_FB={25544:[{d:"FM voice repeater (Region 2/3)",u:145990000,l:437800000,m:"FM",um:"FM"},{d:"APRS digipeater",u:145825000,l:145825000,m:"AFSK 1200",um:"AFSK 1200"}],27607:[{d:"FM voice repeater",u:145850000,l:436795000,m:"FM",um:"FM"}],7530:[{d:"Mode B (U/V) linear transponder",u:432125000,uh:432175000,l:145925000,lh:145975000,m:"SSB/CW",i:true},{d:"Mode A (V/A) linear transponder",u:145850000,uh:145950000,l:29400000,lh:29500000,m:"SSB/CW",i:true}],44909:[{d:"Linear transponder",u:435610000,uh:435640000,l:145935000,lh:145965000,m:"SSB/CW",i:true}],24278:[{d:"Linear transponder",u:145900000,uh:146000000,l:435800000,lh:435900000,m:"SSB/CW",i:true}],42761:[{d:"Linear transponder",u:435210000,uh:435230000,l:145855000,lh:145875000,m:"SSB/CW",i:true}],42759:[{d:"Linear transponder",u:435280000,uh:435300000,l:145915000,lh:145935000,m:"SSB/CW",i:true}]};
+function fq(a,b){var f=function(x){var s=(x/1e6).toFixed(4);return s.slice(-1)==="0"?s.slice(0,-1):s};return a?(b&&b!==a?f(a)+"\u2013"+f(b):f(a)):"\u2014"}
+function noradOf(n){var t=SAT.tle[n];return t?parseInt(t[0].substr(2,5),10):0}
+function repList(){return TRX?SAT.names.filter(function(n){return TRX[noradOf(n)]}):[]}
+function repAdd(force){if(!TRX||!SAT.names.length)return;if(!force&&D.repAuto)return;var a=repList(),f=(D.sats||[]).slice();a.forEach(function(n){if(f.indexOf(n)<0)f.push(n)});D.sats=f;D.repAuto=true;save();satUI();satCalc();if(force)$("sat_n").textContent="Tracking all "+a.length+" repeater satellites found."}
+function trxApply(fail){if(fail&&!TRX)TRX=TRX_FB;$("trx_age").textContent=TRX===TRX_FB?"Using bundled frequencies (verify)":"Frequencies: SatNOGS DB";repAdd(false);trkFreq()}
+function trxFetch(){fetch("https://db.satnogs.org/api/transmitters/?alive=true&service=Amateur&format=json").then(function(r){if(!r.ok)throw 1;return r.json()}).then(function(j){var o={};
+ j.forEach(function(t){if(t.alive===false||t.status==="invalid"||t.status==="inactive"||(t.service&&t.service!=="Amateur")||!t.uplink_low||!t.downlink_low||!t.norad_cat_id)return;
+  if(!(t.type==="Transponder"||/repeat|transpond|digi|linear|voice|aprs/i.test(t.description||"")))return;
+  (o[t.norad_cat_id]=o[t.norad_cat_id]||[]).push({d:t.description,u:t.uplink_low,uh:t.uplink_high,l:t.downlink_low,lh:t.downlink_high,m:t.mode,um:t.uplink_mode,i:t.invert})});
+ if(!Object.keys(o).length)throw 1;TRX=o;try{localStorage.setItem("hc_trx",JSON.stringify({t:Date.now(),x:o}))}catch(e){}trxApply()}).catch(function(){trxApply(true)})}
+function trxInit(){var c=null;try{c=JSON.parse(localStorage.getItem("hc_trx")||"null")}catch(e){}if(c&&c.x)TRX=c.x;if(!c||Date.now()-c.t>6048e5)trxFetch();else trxApply()}
+function trkFreq(){var el=$("trk_freq");if(!el)return;var n=$("trk_sat").value;if(!n){el.innerHTML="";return}var a=TRX&&TRX[noradOf(n)];
+ if(!a){el.innerHTML='<div class="dim" style="font-size:13px">No uplink/downlink data for this satellite.</div>';return}
+ el.innerHTML='<div class="lbl" style="margin-bottom:4px">'+esc(sl(n))+' uplink / downlink (MHz)</div>'+a.map(function(t){return'<div style="padding:6px 0;border-top:1px solid var(--line);font-size:14px"><div class="dim" style="font-size:12px">'+esc(t.d||t.m||"")+(t.i?" \u00b7 inverting":"")+'</div>Up <b>'+fq(t.u,t.uh)+'</b> '+esc(t.um||"")+' &nbsp; Down <b>'+fq(t.l,t.lh)+'</b> '+esc(t.m||"")+'</div>'}).join("")+'<div class="dim" style="font-size:11px;margin-top:4px">Check the satellite\u2019s current status before transmitting.</div>'}
+(function(){$("trk_stat").insertAdjacentHTML("afterend",'<div id="trk_freq" style="margin-top:10px"></div>');
+ $("sat_fav").insertAdjacentHTML("beforebegin",'<div class="row" style="margin-top:8px;justify-content:flex-start"><button id="sat_all">Add all repeater satellites</button><span class="dim" id="trx_age" style="font-size:12px"></span></div>');
+ $("sat_all").onclick=function(){if(!TRX){$("sat_n").textContent="Frequency data hasn\u2019t loaded yet.";return}if(!SAT.names.length){$("sat_n").textContent="Orbit data hasn\u2019t loaded yet.";return}repAdd(true)}})();
 function satInit(){try{var c=JSON.parse(localStorage.getItem("hc_tle")||"null");if(c&&c.x)satLoad(c.x,c.t)}catch(e){}
- $("trk_mode").value=D.tm||"top";$("trk_tol").value=D.tt||"10";$("trk_dec").value=D.td||"";satUI();satCalc();if(!SAT.t||Date.now()-SAT.t>864e5)satFetch()}
+ $("trk_mode").value=D.tm||"top";$("trk_tol").value=D.tt||"10";$("trk_dec").value=D.td||"";trxInit();satUI();satCalc();if(!SAT.t||Date.now()-SAT.t>864e5)satFetch()}
 satInit();
 GT={b:null,zoom:false,res:[]};
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
