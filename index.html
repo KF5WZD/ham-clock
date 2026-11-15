@@ -17,12 +17,12 @@ main{max-width:1200px;margin:0 auto;padding:14px;display:grid;gap:12px}
 #gate{max-width:480px}
 #app{display:grid;gap:12px;align-items:start;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
 #app[data-t=main]{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1fr)}
-#app[data-t=prop]{grid-template-columns:minmax(0,1fr) minmax(0,2.4fr);align-items:stretch}
+#app[data-t=prop]{grid-template-columns:minmax(0,1fr) minmax(0,2.2fr) minmax(0,1fr);align-items:stretch}
 #app>.alert,#app>#tabs{grid-column:1/-1}
 #app>.alert{order:-2}
 #app>#tabs{order:-1}
 [data-k=sun]{order:1}[data-k=clock]{order:2}[data-k=tz]{order:3}[data-k=wx]{order:4;grid-column:1/-1}
-[data-k=solar]{order:1;display:flex;flex-direction:column;justify-content:space-between}[data-k=map]{order:2}[data-k=grid]{order:3;grid-column:1/-1}
+[data-k=solar]{order:1;display:flex;flex-direction:column;justify-content:space-between}[data-k=map]{order:2}[data-k=spots]{order:3;display:flex;flex-direction:column}[data-k=spots] select{padding:6px 4px;font-size:13px;min-width:0}[data-k=grid]{order:4;grid-column:1/-1}
 #gtbody{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
 #gtbody>div+div{border-top:1px solid var(--line);padding-top:14px}
 #gtbody>div>.lbl:first-child{margin-top:0!important}
@@ -33,7 +33,7 @@ main{max-width:1200px;margin:0 auto;padding:14px;display:grid;gap:12px}
 @media(min-width:900px){[data-k=solar] .grid{grid-template-columns:repeat(3,minmax(0,1fr))}[data-k=solar] .wx{font-size:30px}}
 @media(min-width:900px){#gtbody{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr);gap:0 22px}#gtbody>div+div{border-top:0;padding-top:0;border-left:1px solid var(--line);padding-left:22px}}
 [data-k=clock]{text-align:center;border-color:var(--acc)}
-@media(max-width:899px){#app[data-t=main],#app[data-t=prop]{grid-template-columns:minmax(0,1fr)}[data-k=clock]{order:1}[data-k=sun]{order:2}[data-k=tz]{order:3}[data-k=map]{order:1}[data-k=solar]{order:2}[data-k=grid]{order:3}}
+@media(max-width:899px){#app[data-t=main],#app[data-t=prop]{grid-template-columns:minmax(0,1fr)}[data-k=clock]{order:1}[data-k=sun]{order:2}[data-k=tz]{order:3}[data-k=map]{order:1}[data-k=solar]{order:2}[data-k=spots]{order:3}[data-k=grid]{order:4}[data-k=spots] #sp_list{flex:none;height:auto;max-height:380px}}
 @media(min-width:900px){#app .big{font-size:min(7vw,76px)}#app .big.loc{font-size:min(4.4vw,46px)}}
 #wxbody{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px}
 #app .card{min-width:0}
@@ -129,7 +129,7 @@ ul{margin:8px 0 0;padding:0;list-style:none;font:14px ui-monospace,Menlo,Consola
 <div class="card">
  <div class="row"><span class="lbl">Greyline map</span><span class="dim" id="mapinfo"></span></div>
  <canvas id="map" width="1080" height="540" style="width:100%;height:auto;display:block;border-radius:9px;margin-top:8px"></canvas>
- <div class="dim" style="font-size:13px;margin-top:8px">Amber band = grey line (twilight). Yellow dot = sun overhead, blue dot = your station. Land outlines are simplified.</div>
+ <div class="dim" style="font-size:13px;margin-top:8px">Amber band = grey line (twilight). Yellow dot = sun overhead, blue dot = your station. Colored pins = live spots (tap one for details). Land outlines are simplified.</div>
 </div>
 
 <div class="card">
@@ -188,6 +188,15 @@ ul{margin:8px 0 0;padding:0;list-style:none;font:14px ui-monospace,Menlo,Consola
  <div class="lbl" style="margin:14px 0 8px">Find a grid by city or town</div>
  <div class="row" style="flex-wrap:nowrap"><input id="gt_city" autocomplete="off" placeholder="City or town (e.g. Jackson, Mississippi)" style="flex:1;min-width:0"><button id="gt_find" class="on">Find</button></div>
  <div id="gt_res" class="dim" style="margin-top:8px;display:grid;gap:6px;font-size:14px"></div>
+</div>
+
+<div class="card">
+ <div class="row"><span class="lbl">Live spots</span><span class="dim" id="sp_src" style="font-size:12px"></span></div>
+ <div class="grid" style="margin-top:8px;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px"><select id="sp_b"><option value="">Bands</option><option>160m</option><option>80m</option><option>60m</option><option>40m</option><option>30m</option><option>20m</option><option>17m</option><option>15m</option><option>12m</option><option>10m</option><option>6m</option><option>2m</option><option>70cm</option></select><select id="sp_m"><option value="">Modes</option><option value="CW">CW</option><option value="PH">Phone</option><option value="DG">Digital</option></select><select id="sp_s"><option value="">Sources</option><option value="DX">DX cluster</option><option value="POTA">POTA</option><option value="SOTA">SOTA</option></select></div>
+ <div class="row" style="margin-top:8px;gap:6px;justify-content:flex-start"><span class="dim" style="font-size:12px">Pins by:</span><button id="sp_c" style="padding:3px 10px;font-size:13px">Mode</button></div>
+ <div class="dim" id="sp_leg" style="font-size:11px;margin-top:6px"></div>
+ <div id="sp_list" style="margin-top:8px;display:grid;gap:4px;align-content:start;overflow-y:auto;flex:1 1 0;min-height:200px"></div>
+ <div class="dim" id="sp_n" style="font-size:11px;margin-top:6px"></div>
 </div>
 
 <div class="card links">
@@ -349,6 +358,7 @@ function sunmap(){
  x.strokeStyle="rgba(219,229,240,.12)";x.lineWidth=1;
  for(i=1;i<12;i++){x.beginPath();x.moveTo(i*W/12,0);x.lineTo(i*W/12,Hh);x.stroke()}
  for(i=1;i<6;i++){x.beginPath();x.moveTo(0,i*Hh/6);x.lineTo(W,i*Hh/6);x.stroke()}
+ if(typeof spPins==="function")spPins(x,W,Hh);
  function dot(la,lo,col,rad){x.beginPath();x.arc((lo+180)/360*W,(90-la)/180*Hh,rad,0,7);x.fillStyle=col;x.fill();x.strokeStyle="#fff";x.lineWidth=2;x.stroke()}
  dot(s.dec/R,slon,"#f2c879",10);if(has)dot(lat,lon,"#7fb2e5",9);
  $("mapinfo").textContent="Updated "+hm(um,1);bands()}
@@ -560,6 +570,41 @@ function glDraw(){if(!GL||!SAT||typeof satellite==="undefined"||$("app").dataset
  if(DESK){["trk_mode","trk_tol","trk_dec"].forEach(function(id){$(id).closest("label").style.display="none"});$("trk_go").style.display="none";$("trk_msg").style.display="none";$("trk_info").style.display="none";
   var nt=$("trk_stat").closest(".card").lastElementChild;nt.textContent="Computers have no motion sensors, so the globe does the pointing. Drag it to rotate, scroll to zoom, or use the buttons. The readout gives the azimuth and elevation to aim at."}
  view();setInterval(glDraw,1000)})();
+var SP=null;
+var BC={"160m":"#9b59ff","80m":"#5b6cff","60m":"#3aa0ff","40m":"#2ec4c4","30m":"#2fd37a","20m":"#a8e03a","17m":"#ffe03a","15m":"#ffb03a","12m":"#ff7a3a","10m":"#ff4a4a","6m":"#ff4acb","2m":"#ffffff","70cm":"#d0d0d0"},MC={CW:"#e8943a",PH:"#4aa8ff",DG:"#5fd38d",OT:"#b0b8c4"};
+function spGrp(m){m=(m||"").toUpperCase();if(/^CW/.test(m))return"CW";if(/SSB|USB|LSB|^AM$|^FM$|PHONE|SSTV/.test(m))return"PH";if(/FT8|FT4|RTTY|PSK|JT|MFSK|OLIVIA|DIGI|DATA|HELL|FSK|WSPR|MSK|Q65|THOR|CONTESTIA|PKT/.test(m))return"DG";return"OT"}
+function spCol(s){return SP.col==="band"?(BC[s.band]||"#cfd6e0"):MC[s.g]}
+function bandOf(f){var m=f/1e6;for(var i=0;i<BANDS.length;i++)if(m>=BANDS[i].lo-.001&&m<=BANDS[i].hi+.001)return BANDS[i].n;return""}
+function spSH(j){var a=Array.isArray(j)?j:(j&&j.spots)||[],o=[];a.forEach(function(s){var f=+s.freq||0;if(!f)return;if(f<1000)f*=1e6;else if(f<1e5)f*=1e3;
+ var sig=String(s.sig||"").toUpperCase(),so=String(s.source||""),src=sig==="POTA"||sig==="SOTA"?sig:"DX";if(/rbn|aprs/i.test(so))return;
+ var t=typeof s.time==="number"?(s.time>1e12?s.time:s.time*1000):Date.parse(s.time_iso||s.time),la=s.dx_latitude!=null?+s.dx_latitude:(s.latitude!=null?+s.latitude:null),lo=s.dx_longitude!=null?+s.dx_longitude:(s.longitude!=null?+s.longitude:null);
+ if((la==null||lo==null||isNaN(la)||isNaN(lo))&&s.dx_grid){var g=g2ll(String(s.dx_grid).slice(0,6));if(g){la=g[0];lo=g[1]}}
+ if(la==null||lo==null||isNaN(la)||isNaN(lo)){la=null;lo=null}
+ var ref=Array.isArray(s.sig_refs)?s.sig_refs.map(function(r){return typeof r==="object"&&r?(r.id||""):r}).join(","):"";
+ o.push({call:s.dx_call||s.activator||"?",f:f,mode:String(s.mode||"").toUpperCase(),band:bandOf(f)||s.band||"",t:t||Date.now(),src:src,ref:ref,la:la,lo:lo})});return o}
+function spPOTA(j){return(j||[]).map(function(s){var f=parseFloat(s.frequency)*1e3,st=String(s.spotTime||""),la=s.latitude!=null?+s.latitude:null,lo=s.longitude!=null?+s.longitude:null;return{call:s.activator||"?",f:f,mode:String(s.mode||"").toUpperCase(),band:bandOf(f),t:Date.parse(st+(/Z$/.test(st)?"":"Z"))||Date.now(),src:"POTA",ref:s.reference||"",la:isNaN(la)?null:la,lo:isNaN(lo)?null:lo}}).filter(function(s){return s.f>0})}
+function spSet(a,src){var seen={},o=[],now=Date.now();a.forEach(function(s){s.g=spGrp(s.mode)});a.sort(function(x,y){return y.t-x.t}).forEach(function(s){var k=s.call+s.band;if(seen[k]||now-s.t>36e5)return;seen[k]=1;o.push(s)});
+ SP.all=o;SP.t=now;SP.src=src;var d=new Date();$("sp_src").textContent=src+" \u00b7 "+hm(d.getUTCHours()*60+d.getUTCMinutes(),1);$("sp_n").textContent="Spots from the last hour. They are reports from other stations and can be wrong.";spRender()}
+function spFetch(){if(!SP)return;SP.t=Date.now();$("sp_n").textContent="Loading spots\u2026";
+ fetch("https://spothole.app/api/v1/spots?limit=200").then(function(r){if(!r.ok)throw 1;return r.json()}).then(function(j){var a=spSH(j);if(!a.length)throw 1;spSet(a,"Spothole")})
+ .catch(function(){fetch("https://api.pota.app/spot/activator").then(function(r){if(!r.ok)throw 1;return r.json()}).then(function(j){spSet(spPOTA(j),"POTA (backup)")}).catch(function(){$("sp_n").textContent="Couldn\u2019t load live spots. Needs an internet connection."})})}
+function spMaybe(){if(!SP||$("app").dataset.t!=="prop"||Date.now()-SP.t<60000)return;spFetch()}
+function spLeg(){var h=SP.col==="band"?Object.keys(BC).map(function(k){return'<span style="color:'+BC[k]+'">\u25cf</span> '+k}).join(" "):'<span style="color:'+MC.CW+'">\u25cf</span> CW <span style="color:'+MC.PH+'">\u25cf</span> Phone <span style="color:'+MC.DG+'">\u25cf</span> Digital <span style="color:'+MC.OT+'">\u25cf</span> Other';$("sp_leg").innerHTML=h;$("sp_c").textContent=SP.col==="band"?"Band":"Mode"}
+function spRender(){if(!SP)return;var b=$("sp_b").value,m=$("sp_m").value,s=$("sp_s").value,now=Date.now();
+ SP.vis=SP.all.filter(function(x){return(!b||x.band===b)&&(!m||x.g===m)&&(!s||x.src===s)});
+ $("sp_list").innerHTML=SP.vis.length?SP.vis.slice(0,80).map(function(x,i){var ag=Math.round((now-x.t)/6e4);return'<div data-i="'+i+'" style="display:grid;grid-template-columns:10px 58px 38px 1fr 26px;gap:6px;align-items:center;padding:4px 6px;border-radius:7px;font-size:13px;cursor:pointer;background:'+(SP.sel===x?"var(--line)":"var(--bg)")+'"><i style="width:10px;height:10px;border-radius:50%;background:'+spCol(x)+'"></i><span>'+(x.f/1e6).toFixed(3)+'</span><span class="dim" style="font-size:11px">'+esc(x.mode.slice(0,5))+'</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><b>'+esc(x.call)+'</b>'+(x.ref?' <span class="dim" style="font-size:11px">'+esc(x.ref)+'</span>':'')+'</span><span class="dim" style="font-size:11px">'+(ag<1?"<1":ag)+'m</span></div>'}).join(""):'<div class="dim" style="font-size:13px">'+(SP.t?"No spots match these filters.":"Waiting for spots\u2026")+'</div>';
+ spLeg();sunmap()}
+function spPins(x,W,Hh){if(!SP||!SP.vis)return;SP.vis.forEach(function(s){if(s.la==null)return;var px=(s.lo+180)/360*W,py=(90-s.la)/180*Hh;x.beginPath();x.arc(px,py,7,0,7);x.fillStyle=spCol(s);x.fill();x.strokeStyle="rgba(10,16,26,.9)";x.lineWidth=2;x.stroke();if(SP.sel===s){x.beginPath();x.arc(px,py,12,0,7);x.strokeStyle="#fff";x.lineWidth=3;x.stroke()}})}
+SP={all:[],vis:[],col:D.spc||"mode",sel:null,t:0,src:""};
+$("sp_b").value=D.spb||"";$("sp_m").value=D.spm||"";$("sp_s").value=D.sps||"";
+["sp_b","sp_m","sp_s"].forEach(function(id){$(id).onchange=function(){D.spb=$("sp_b").value;D.spm=$("sp_m").value;D.sps=$("sp_s").value;save();SP.sel=null;spRender()}});
+$("sp_c").onclick=function(){SP.col=SP.col==="band"?"mode":"band";D.spc=SP.col;save();spRender()};
+$("sp_list").onclick=function(e){var r=e.target.closest("[data-i]");if(!r)return;var s=SP.vis[+r.dataset.i];SP.sel=s;if(s.la!=null){D.tgt=s.la.toFixed(2)+","+s.lo.toFixed(2);save();$("bm_in").value=D.tgt;beam();gtShow(grid(s.la,s.lo));$("map_pin").textContent=s.call+" \u00b7 "+(s.f/1e6).toFixed(3)+" MHz \u00b7 "+s.mode+" \u00b7 aimed in Beam heading"}spRender()};
+(function(){var cv=$("map");cv.style.cursor="pointer";cv.insertAdjacentHTML("afterend",'<div class="dim" id="map_pin" style="font-size:13px;margin-top:6px;min-height:18px"></div>');
+ cv.onclick=function(e){if(!SP||!SP.vis.length)return;var r=cv.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*cv.width,y=(e.clientY-r.top)/r.height*cv.height,best=null,bd=1e9;
+  SP.vis.forEach(function(s){if(s.la==null)return;var d=Math.hypot((s.lo+180)/360*cv.width-x,(90-s.la)/180*cv.height-y);if(d<bd){bd=d;best=s}});
+  if(best&&bd<28){SP.sel=best;$("map_pin").textContent=best.call+" \u00b7 "+(best.f/1e6).toFixed(3)+" MHz \u00b7 "+best.mode+" \u00b7 "+best.src+(best.ref?" "+best.ref:"");spRender()}}})();
+spLeg();setInterval(spMaybe,30000);
 function satInit(){try{var c=JSON.parse(localStorage.getItem("hc_tle")||"null");if(c&&c.x)satLoad(c.x,c.t)}catch(e){}
  $("trk_mode").value=D.tm||"top";$("trk_tol").value=D.tt||"10";$("trk_dec").value=D.td||"";trxInit();satUI();satCalc();if(!SAT.t||Date.now()-SAT.t>864e5)satFetch()}
 satInit();
@@ -614,8 +659,8 @@ function radar(){var r=$("radar");if(!r)return;var la=parseFloat(D.lat),lo=parse
  if(r.dataset.u===u)return;r.dataset.u=u;
  r.innerHTML='<iframe src="'+u+'" title="Live radar" loading="lazy" style="width:100%;height:380px;border:0;border-radius:9px"></iframe><div class="dim" style="font-size:12px;margin-top:4px">Live radar by Windy.com. Needs an internet connection.</div>'}
 $("rdr_t").onclick=function(){D.radar=(D.radar===false);save();radar()};
-var TABS={utc:["main","clock"],wx:["main","wx"],tzs:["main","tz"],sunloc:["main","sun"],sfi:["prop","solar"],map:["prop","map"],gt_in:["prop","grid"],bands:["more"],sat_list:["sat","passes"],trk_go:["sat","trk"],s_call:["more"]};
-function showTab(t){D.tab=t;save();$("app").dataset.t=t;glDraw();document.querySelectorAll("#app .card").forEach(function(c){c.style.display=c.dataset.tab===t?"":"none"});Array.prototype.forEach.call($("tabs").children,function(b){b.classList.toggle("on",b.dataset.t===t)})}
+var TABS={utc:["main","clock"],wx:["main","wx"],tzs:["main","tz"],sunloc:["main","sun"],sfi:["prop","solar"],map:["prop","map"],gt_in:["prop","grid"],sp_list:["prop","spots"],bands:["more"],sat_list:["sat","passes"],trk_go:["sat","trk"],s_call:["more"]};
+function showTab(t){D.tab=t;save();$("app").dataset.t=t;glDraw();spMaybe();document.querySelectorAll("#app .card").forEach(function(c){c.style.display=c.dataset.tab===t?"":"none"});Array.prototype.forEach.call($("tabs").children,function(b){b.classList.toggle("on",b.dataset.t===t)})}
 Object.keys(TABS).forEach(function(id){var c=$(id).closest(".card");c.dataset.tab=TABS[id][0];if(TABS[id][1])c.dataset.k=TABS[id][1]});document.querySelector(".card.links").dataset.tab="more";
 $("tabs").onclick=function(e){var t=e.target.dataset.t;if(t)showTab(t)};
 if(D.gt)gtShow(D.gt);else gtDraw();radar();
