@@ -6,6 +6,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Zulu Shack">
 <meta name="theme-color" content="#1b2636">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Zulu Shack</title>
 <style>
 :root{color-scheme:dark;--bg:#1b2636;--card:#243249;--line:#34476a;--tx:#dbe5f0;--dim:#8fa3bd;--utc:#f2c879;--acc:#7fb2e5;--ok:#7fd4a0;--bad:#e58a8a;
@@ -272,10 +277,12 @@ function grid(lat,lon){lat=+lat;lon=+lon;if(isNaN(lat)||isNaN(lon))return"";var 
  g+=a[Math.floor((lon%2)*12)]+a[Math.floor((lat%1)*24)];return g}
 var WC={0:"Clear",1:"Mostly clear",2:"Partly cloudy",3:"Overcast",45:"Fog",48:"Rime fog",51:"Light drizzle",53:"Drizzle",55:"Heavy drizzle",61:"Light rain",63:"Rain",65:"Heavy rain",71:"Light snow",73:"Snow",75:"Heavy snow",80:"Showers",81:"Showers",82:"Heavy showers",95:"Thunderstorm",96:"Thunderstorm, hail",99:"Thunderstorm, hail"};
 var SRC={om:"Open-Meteo",nws:"NWS",url:"Custom"};
-function show(t,h,w,desc){var F=D.u==="F";
+function show(t,h,w,desc){var F=D.u==="F";if(!show.c)try{localStorage.setItem("hc_wx",JSON.stringify({t:Date.now(),u:D.u,l:D.lat+","+D.lon,a:[t,h,w,desc]}))}catch(e){}
  $("wx").textContent=(t==null?"--":Math.round(t)+(F?"°F":"°C"))+(desc?" · "+desc:"");
  $("wx2").textContent="Humidity "+(h==null?"--":Math.round(h)+"%")+"  ·  Wind "+(w==null?"--":Math.round(w)+(F?" mph":" km/h"))}
-function fail(){$("wx").textContent="Weather unavailable";
+function fail(){var c=null;try{c=JSON.parse(localStorage.getItem("hc_wx")||"null")}catch(e){}
+ if(c&&c.u===D.u&&c.l===D.lat+","+D.lon){show.c=1;show.apply(null,c.a);show.c=0;var d=new Date(c.t);$("wx2").textContent+="  ·  saved "+p2(d.getHours())+":"+p2(d.getMinutes())+" (offline)";return}
+ $("wx").textContent="Weather unavailable";
  $("wx2").textContent="Needs a network connection and a lat/lon in Settings. Some hosts (including this preview) block outside requests; hosted or downloaded copies work."}
 function weather(){
  sunmap();beam();satCalc();gtDraw();radar();
@@ -363,10 +370,12 @@ function sunmap(){
  function dot(la,lo,col,rad){x.beginPath();x.arc(((lo+180)/360*W-mv.x0)*k,((90-la)/180*Hh-mv.y0)*k,rad,0,7);x.fillStyle=col;x.fill();x.strokeStyle="#fff";x.lineWidth=2;x.stroke()}
  dot(s.dec/R,slon,"#f2c879",10);if(has)dot(lat,lon,"#7fb2e5",9);
  $("mapinfo").textContent="Updated "+hm(um,1)+(k>1.01?" \u00b7 "+k.toFixed(1)+"\u00d7":"");bands()}
-function solar(){var set=function(id,v){$(id).textContent=isNaN(v)?"--":v},bad=function(){$("solnote").textContent="Solar data unavailable here. It loads on a hosted or downloaded copy with a network connection."};
+function solar(){var set=function(id,v){$(id).textContent=isNaN(v)?"--":v},bad=function(){var c=null;try{c=JSON.parse(localStorage.getItem("hc_sol")||"null")}catch(e){}
+  if(c){if($("sfi").textContent==="--"&&c.sfi!=null){SOL.sfi=c.sfi;$("sfi").textContent=c.sfi}if($("kp").textContent==="--"&&c.kp!=null){SOL.kp=c.kp;$("kp").textContent=c.kp}if($("ai").textContent==="--"&&c.ai)$("ai").textContent=c.ai;var d=new Date(c.t);$("solnote").textContent="Offline. Showing values saved at "+hm(d.getUTCHours()*60+d.getUTCMinutes(),1)+".";bands();return}
+  $("solnote").textContent="Solar data unavailable here. It loads on a hosted or downloaded copy with a network connection."};
  try{
- fetch("https://services.swpc.noaa.gov/products/summary/10cm-flux.json").then(function(r){return r.json()}).then(function(j){var o=Array.isArray(j)?j[0]:j,f=parseFloat(o.flux!=null?o.flux:o.Flux);set("sfi",f);SOL.sfi=isNaN(f)?null:f;bands()}).catch(bad);
- fetch("https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json").then(function(r){return r.json()}).then(function(j){var l=j[j.length-1],k=parseFloat(Array.isArray(l)?l[1]:l.Kp);set("kp",k);SOL.kp=isNaN(k)?null:k;bands();AL.kp=k>=5?"Geomagnetic storm (Kp "+k+"). HF conditions may be degraded.":"";alerts();set("ai",parseFloat(Array.isArray(l)?l[2]:l.a_running));
+ fetch("https://services.swpc.noaa.gov/products/summary/10cm-flux.json").then(function(r){return r.json()}).then(function(j){var o=Array.isArray(j)?j[0]:j,f=parseFloat(o.flux!=null?o.flux:o.Flux);set("sfi",f);SOL.sfi=isNaN(f)?null:f;bands();solSave()}).catch(bad);
+ fetch("https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json").then(function(r){return r.json()}).then(function(j){var l=j[j.length-1],k=parseFloat(Array.isArray(l)?l[1]:l.Kp);set("kp",k);SOL.kp=isNaN(k)?null:k;bands();AL.kp=k>=5?"Geomagnetic storm (Kp "+k+"). HF conditions may be degraded.":"";alerts();set("ai",parseFloat(Array.isArray(l)?l[2]:l.a_running));solSave();
   $("solnote").textContent=isNaN(k)?"":k<3?"Geomagnetic field quiet. Good for HF.":k<5?"Field unsettled. Expect some HF disturbance.":"Geomagnetic storm. HF may be degraded."}).catch(bad);
  fetch("https://services.swpc.noaa.gov/json/goes/primary/xrays-6-hour.json").then(function(r){return r.json()}).then(function(j){var v=0;j.forEach(function(r){if(r.energy==="0.1-0.8nm"&&r.flux>0)v=r.flux});
   AL.xr=v>=1e-5?"Solar flare in progress: "+(v>=1e-4?"X"+(v/1e-4).toFixed(1):"M"+(v/1e-5).toFixed(1))+" class. Shortwave fadeouts likely on the sunlit side of Earth.":"";alerts()}).catch(function(){})
@@ -585,10 +594,10 @@ function spSH(j){var a=Array.isArray(j)?j:(j&&j.spots)||[],o=[];a.forEach(functi
  o.push({call:s.dx_call||s.activator||"?",f:f,mode:String(s.mode||"").toUpperCase(),band:bandOf(f)||s.band||"",t:t||Date.now(),src:src,ref:ref,la:la,lo:lo})});return o}
 function spPOTA(j){return(j||[]).map(function(s){var f=parseFloat(s.frequency)*1e3,st=String(s.spotTime||""),la=s.latitude!=null?+s.latitude:null,lo=s.longitude!=null?+s.longitude:null;return{call:s.activator||"?",f:f,mode:String(s.mode||"").toUpperCase(),band:bandOf(f),t:Date.parse(st+(/Z$/.test(st)?"":"Z"))||Date.now(),src:"POTA",ref:s.reference||"",la:isNaN(la)?null:la,lo:isNaN(lo)?null:lo}}).filter(function(s){return s.f>0})}
 function spSet(a,src){var seen={},o=[],now=Date.now();a.forEach(function(s){s.g=spGrp(s.mode)});a.sort(function(x,y){return y.t-x.t}).forEach(function(s){var k=s.call+s.band;if(seen[k]||now-s.t>36e5)return;seen[k]=1;o.push(s)});
- SP.all=o;SP.t=now;SP.src=src;var d=new Date();$("sp_src").textContent=src+" \u00b7 "+hm(d.getUTCHours()*60+d.getUTCMinutes(),1);$("sp_n").textContent="Spots from the last hour. They are reports from other stations and can be wrong.";spRender()}
+ SP.all=o;SP.t=now;SP.src=src;try{localStorage.setItem("hc_sp",JSON.stringify({t:now,all:o.slice(0,120)}))}catch(e){}var d=new Date();$("sp_src").textContent=src+" \u00b7 "+hm(d.getUTCHours()*60+d.getUTCMinutes(),1);$("sp_n").textContent="Spots from the last hour. They are reports from other stations and can be wrong.";spRender()}
 function spFetch(){if(!SP)return;SP.t=Date.now();$("sp_n").textContent="Loading spots\u2026";
  fetch("https://spothole.app/api/v1/spots?limit=200").then(function(r){if(!r.ok)throw 1;return r.json()}).then(function(j){var a=spSH(j);if(!a.length)throw 1;spSet(a,"Spothole")})
- .catch(function(){fetch("https://api.pota.app/spot/activator").then(function(r){if(!r.ok)throw 1;return r.json()}).then(function(j){spSet(spPOTA(j),"POTA (backup)")}).catch(function(){$("sp_n").textContent="Couldn\u2019t load live spots. Needs an internet connection."})})}
+ .catch(function(){fetch("https://api.pota.app/spot/activator").then(function(r){if(!r.ok)throw 1;return r.json()}).then(function(j){spSet(spPOTA(j),"POTA (backup)")}).catch(function(){if(spOff())return;$("sp_n").textContent="Couldn\u2019t load live spots. Needs an internet connection."})})}
 function spMaybe(){if(!SP||$("app").dataset.t!=="prop"||Date.now()-SP.t<60000)return;spFetch()}
 function spLeg(){var h=SP.col==="band"?Object.keys(BC).map(function(k){return'<span style="color:'+BC[k]+'">\u25cf</span> '+k}).join(" "):'<span style="color:'+MC.CW+'">\u25cf</span> CW <span style="color:'+MC.PH+'">\u25cf</span> Phone <span style="color:'+MC.DG+'">\u25cf</span> Digital <span style="color:'+MC.OT+'">\u25cf</span> Other';$("sp_leg").innerHTML=h;$("sp_c").textContent=SP.col==="band"?"Band":"Mode"}
 function qrz(c){var p=String(c).toUpperCase().split("/").sort(function(a,b){return b.length-a.length})[0];return"https://www.qrz.com/db/"+encodeURIComponent(p)}
@@ -632,6 +641,18 @@ $("sp_list").onclick=function(e){var r=e.target.closest("[data-i]");if(!r)return
  function up(e){delete Pt[e.pointerId];d0=0}
  cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",up);ta()})();
 spLeg();setInterval(spMaybe,30000);
+function solSave(){var c={};try{c=JSON.parse(localStorage.getItem("hc_sol")||"{}")||{}}catch(e){}if(SOL.sfi!=null)c.sfi=SOL.sfi;if(SOL.kp!=null)c.kp=SOL.kp;var a=$("ai").textContent;if(a&&a!=="--")c.ai=a;c.t=Date.now();try{localStorage.setItem("hc_sol",JSON.stringify(c))}catch(e){}}
+function spOff(){var c=null;try{c=JSON.parse(localStorage.getItem("hc_sp")||"null")}catch(e){}if(!c||!c.all||!c.all.length)return false;SP.all=c.all;SP.t=Date.now();SP.src="Saved";var d=new Date(c.t);$("sp_src").textContent="Saved "+hm(d.getUTCHours()*60+d.getUTCMinutes(),1)+" (offline)";$("sp_n").textContent="Showing the last spots saved on this device. Ages are from when they were reported.";spRender();return true}
+(function(){var dip=null,st;$("tabs").insertAdjacentHTML("afterend",'<div id="offl" style="display:none;order:0;grid-column:1/-1;background:#3a3320;border:1px solid var(--utc);border-radius:14px;padding:8px 14px;font-size:13px">Offline. Showing saved data where available.</div>');
+ $("so").closest(".card").insertAdjacentHTML("beforeend",'<div class="row" style="margin-top:10px;justify-content:flex-start;gap:8px"><button id="pwa_i" style="display:none">Install app</button><span class="dim" id="pwa_st" style="font-size:13px"></span></div>');st=$("pwa_st");
+ function net(){$("offl").style.display=navigator.onLine===false?"":"none"}
+ window.addEventListener("offline",net);window.addEventListener("online",function(){net();weather();solar();if(SP)SP.t=0;spMaybe()});net();
+ window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();dip=e;$("pwa_i").style.display=""});
+ $("pwa_i").onclick=function(){if(dip){dip.prompt();dip=null;$("pwa_i").style.display="none"}};
+ function toast(){if($("upd"))return;document.body.insertAdjacentHTML("beforeend",'<div id="upd" style="position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:50;background:var(--card);border:1px solid var(--acc);border-radius:12px;padding:10px 14px;display:flex;gap:10px;align-items:center;font-size:14px">A new version is ready <button id="upd_b" class="on">Reload</button></div>');$("upd_b").onclick=function(){location.reload()}}
+ if("serviceWorker" in navigator&&location.protocol.indexOf("http")===0){navigator.serviceWorker.register("sw.js").then(function(r){st.textContent="Offline mode is ready after the first load.";navigator.serviceWorker.ready.then(function(){st.textContent="Offline mode ready. Live data shows the last saved values when you have no signal."});
+   r.addEventListener("updatefound",function(){var n=r.installing;if(n)n.addEventListener("statechange",function(){if(n.state==="installed"&&navigator.serviceWorker.controller)toast()})})}).catch(function(){st.textContent="Offline mode isn\u2019t available here."})}
+ else st.textContent="Offline mode works on the hosted https version."})();
 function satInit(){try{var c=JSON.parse(localStorage.getItem("hc_tle")||"null");if(c&&c.x)satLoad(c.x,c.t)}catch(e){}
  $("trk_mode").value=D.tm||"top";$("trk_tol").value=D.tt||"10";$("trk_dec").value=D.td||"";trxInit();satUI();satCalc();if(!SAT.t||Date.now()-SAT.t>864e5)satFetch()}
 satInit();
@@ -680,7 +701,7 @@ $("gt_res").onclick=function(e){var r=e.target.closest("[data-i]");if(!r)return;
  body.appendChild(info);body.appendChild(rad);c.appendChild(body)})();
 function radar(){var r=$("radar");if(!r)return;var la=parseFloat(D.lat),lo=parseFloat(D.lon),t=$("rdr_t");
  if(D.radar===false){r.innerHTML="";r.dataset.u="";t.textContent="Show live radar";return}
- t.textContent="Hide radar";
+ t.textContent="Hide radar";if(navigator.onLine===false){r.innerHTML='<div class="dim">Radar needs an internet connection.</div>';r.dataset.u="";return}
  if(isNaN(la)||isNaN(lo)){r.innerHTML='<div class="dim">Set your location to see radar.</div>';r.dataset.u="";return}
  var u="https://embed.windy.com/embed2.html?lat="+la.toFixed(2)+"&lon="+lo.toFixed(2)+"&detailLat="+la.toFixed(2)+"&detailLon="+lo.toFixed(2)+"&width=650&height=380&zoom=7&level=surface&overlay=radar&product=radar&menu=&message=&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1";
  if(r.dataset.u===u)return;r.dataset.u=u;

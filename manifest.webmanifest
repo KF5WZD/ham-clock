@@ -1,0 +1,18 @@
+{
+  "id": "./",
+  "name": "Zulu Shack",
+  "short_name": "Zulu Shack",
+  "description": "Ham radio dashboard: UTC clock, propagation, live spots, greyline map and satellite tracking.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1b2636",
+  "theme_color": "#1b2636",
+  "categories": ["utilities"],
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
