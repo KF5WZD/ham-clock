@@ -712,7 +712,7 @@ function showTab(t){D.tab=t;save();$("app").dataset.t=t;glDraw();spMaybe();docum
 Object.keys(TABS).forEach(function(id){var c=$(id).closest(".card");c.dataset.tab=TABS[id][0];if(TABS[id][1])c.dataset.k=TABS[id][1]});document.querySelector(".card.links").dataset.tab="more";
 $("tabs").onclick=function(e){var t=e.target.dataset.t;if(t)showTab(t)};
 if(D.gt)gtShow(D.gt);else gtDraw();radar();
-showTab(D.tab||"main");trkDraw(null,null,false);
+showTab("main");trkDraw(null,null,false);
 function bscore(b,el){var sf=SOL.sfi==null?100:SOL.sfi,kp=SOL.kp==null?1:SOL.kp,f=Math.max(0,Math.min(1,(el+6)/12)),adj=b.m[2]*Math.max(-1.5,Math.min(1.5,(sf-100)/50)),nt=b.m[1]+adj*.4,dy=b.m[0]+adj,s=nt+(dy-nt)*f-(kp>=5?1:kp>=4?.5:0);return Math.max(0,Math.min(1,(s+.3)/2.6))}
 var RS=[[0,10,12,16],[.14,230,40,40],[.3,255,140,30],[.45,255,225,50],[.6,40,210,80],[.75,50,120,255],[.88,85,55,215],[1,176,90,255]];
 function ramp(v){for(var i=1;i<RS.length;i++)if(v<=RS[i][0]){var a=RS[i-1],b=RS[i],f=(v-a[0])/(b[0]-a[0]);return"rgb("+Math.round(a[1]+(b[1]-a[1])*f)+","+Math.round(a[2]+(b[2]-a[2])*f)+","+Math.round(a[3]+(b[3]-a[3])*f)+")"}return"rgb(176,90,255)"}
@@ -727,7 +727,7 @@ function hf(){var c=$("hf_cv");if(!c||!BANDS)return;var x=c.getContext("2d"),W=c
  if(!has){x.fillStyle="rgba(219,229,240,.9)";x.fillText("Set your location",L+(W-L)/2,T+B.length*rh/2)}}
 function gUI(){var m=$("g_mode").value;$("gl_lat").style.display=$("gl_lon").style.display=m==="ll"?"":"none";$("gl_grid").style.display=m==="grid"?"":"none";$("gl_gps").style.display=m==="gps"?"":"none"}
 $("g_mode").onchange=gUI;
-function enterApp(){$("gate").style.display="none";$("app").style.display="";fill();tick();weather();solar()}
+function enterApp(){$("gate").style.display="none";$("app").style.display="";fill();tick();weather();solar();showTab("main")}
 function openGate(){$("g_call").value=D.signed===undefined?"":D.call;$("g_mode").value=D.mode;$("g_lat").value=D.lat;$("g_lon").value=D.lon;$("g_grid").value=D.grid;$("g_err").textContent="";gUI();$("app").style.display="none";$("gate").style.display=""}
 function gErr(t){$("g_err").textContent=t}
 $("g_go").onclick=function(){var c=$("g_call").value.trim().toUpperCase();
