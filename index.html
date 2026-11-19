@@ -21,7 +21,8 @@ body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 -apple-system,s
 main{max-width:1200px;margin:0 auto;padding:14px;display:grid;gap:12px}
 #gate{max-width:480px}
 #app{display:grid;gap:12px;align-items:start;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
-#app[data-t=main]{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1fr)}
+#app[data-t=main]{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1fr);align-items:stretch}
+[data-k=sun],[data-k=clock],[data-k=tz]{display:flex;flex-direction:column}[data-k=sun] .grid{flex:1;grid-template-columns:minmax(0,1fr);align-content:space-evenly}
 #app[data-t=prop]{grid-template-columns:minmax(0,1fr) minmax(0,2.2fr) minmax(0,1fr);align-items:stretch}
 #app>.alert,#app>#tabs{grid-column:1/-1}
 #app>.alert{order:-2}
@@ -676,6 +677,27 @@ $("sp_bp").onclick=function(e){var n=e.target.closest("button");if(!n)return;var
  if(n.dataset.a==="clear")s=[];else if(n.dataset.a==="hf")s=BANDS.filter(function(b){return b.lo<30}).map(function(b){return b.n});
  else if(n.dataset.b){var i=s.indexOf(n.dataset.b);if(i>-1)s.splice(i,1);else s.push(n.dataset.b)}
  D.spbs=s;save();SP.sel=null;spRender()};
+(function(){var c=$("utc").closest(".card"),k=[].slice.call(c.children),w=document.createElement("div");w.style.cssText="flex:1;display:flex;flex-direction:column;justify-content:center";k.slice(1).forEach(function(n){w.appendChild(n)});c.appendChild(w)})();
+(function(){var CV=null,MN=["January","February","March","April","May","June","July","August","September","October","November","December"],DN=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+ $("tzs").closest(".card").insertAdjacentHTML("beforeend",'<div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px"><div class="row"><span class="lbl">Julian date (UTC)</span><span class="dim" id="jd_i" style="font-size:12px"></span></div><div class="row" style="align-items:baseline;justify-content:flex-start;gap:10px;margin-top:2px"><span class="wx" id="jd_d" style="font-size:40px;color:var(--utc)">---</span><span class="dim" id="jd_o"></span></div><div class="dim" id="jd_n" style="font-size:12px"></div><div class="row" style="margin-top:10px;flex-wrap:nowrap"><button id="cal_p" style="padding:3px 10px">\u2039</button><b id="cal_t" style="font-size:14px"></b><button id="cal_n" style="padding:3px 10px">\u203a</button></div><div id="cal_g" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;margin-top:6px;text-align:center;font-size:12px"></div></div>');
+ function doy(y,m,d){return Math.round((Date.UTC(y,m,d)-Date.UTC(y,0,0))/864e5)}
+ function diy(y){return(y%4===0&&y%100!==0)||y%400===0?366:365}
+ function wk(d){var t=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())),n=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-n);return Math.ceil(((t-new Date(Date.UTC(t.getUTCFullYear(),0,1)))/864e5+1)/7)}
+ function cal(){var n=new Date(),ty=n.getUTCFullYear(),tm=n.getUTCMonth(),td=n.getUTCDate();if(!CV)CV={y:ty,m:tm};var y=CV.y,m=CV.m,f=new Date(Date.UTC(y,m,1)).getUTCDay(),dm=new Date(Date.UTC(y,m+1,0)).getUTCDate(),h="",i;
+  $("cal_t").textContent=MN[m]+" "+y;for(i=0;i<7;i++)h+='<div class="dim" style="font-size:11px">'+DN[i].slice(0,2)+'</div>';for(i=0;i<f;i++)h+='<div></div>';
+  for(i=1;i<=dm;i++){var t=y===ty&&m===tm&&i===td;h+='<div style="padding:2px 0;border-radius:6px;'+(t?'background:var(--acc);color:#10202f':'')+'"><div>'+i+'</div><div style="font-size:9px;opacity:.7">'+doy(y,m,i)+'</div></div>'}$("cal_g").innerHTML=h}
+ function jd(){var n=new Date(),y=n.getUTCFullYear(),d=doy(y,n.getUTCMonth(),n.getUTCDate()),p=function(x){return String(x).padStart(2,"0")};
+  $("jd_d").textContent=String(d).padStart(3,"0");$("jd_o").textContent="of "+diy(y)+" \u00b7 "+y+"-"+String(d).padStart(3,"0");
+  $("jd_i").textContent="UTC \u00b7 "+DN[n.getUTCDay()]+" "+n.getUTCDate()+" "+MN[n.getUTCMonth()].slice(0,3)+" "+y;
+  $("jd_n").textContent="JD "+(n.getTime()/864e5+2440587.5).toFixed(4)+" \u00b7 Week "+wk(n)+" \u00b7 "+(diy(y)-d)+" days left"}
+ $("cal_p").onclick=function(){CV.m--;if(CV.m<0){CV.m=11;CV.y--}cal()};$("cal_n").onclick=function(){CV.m++;if(CV.m>11){CV.m=0;CV.y++}cal()};
+ $("cal_t").style.cursor="pointer";$("cal_t").title="Back to this month";$("cal_t").onclick=function(){CV=null;cal()};
+ cal();jd();setInterval(jd,1000);setInterval(function(){var n=new Date();if(!CV||(CV.y===n.getUTCFullYear()&&CV.m===n.getUTCMonth()))cal()},60000)})();
+(function(){var tz=$("tzs"),tc=tz.closest(".card"),w=$("utc").closest(".card").lastElementChild,l=tc.querySelector(".lbl"),jb=$("jd_i").parentNode.parentNode;
+ if(l&&l.textContent==="World clocks")l.remove();
+ w.insertAdjacentHTML("beforeend",'<div class="lbl" style="margin:18px 0 6px">World clocks</div>');w.appendChild(tz);
+ jb.style.margin="0";jb.style.padding="0";jb.style.border="0";jb.style.flex="1";jb.style.display="flex";jb.style.flexDirection="column";
+ jb.querySelector(".lbl").textContent="Julian date";var cg=$("cal_g");cg.style.flex="1";cg.style.alignContent="space-evenly"})();
 function satInit(){try{var c=JSON.parse(localStorage.getItem("hc_tle")||"null");if(c&&c.x)satLoad(c.x,c.t)}catch(e){}
  $("trk_mode").value=D.tm||"top";$("trk_tol").value=D.tt||"10";$("trk_dec").value=D.td||"";trxInit();satUI();satCalc();if(!SAT.t||Date.now()-SAT.t>864e5)satFetch()}
 satInit();
@@ -730,7 +752,7 @@ function radar(){var r=$("radar");if(!r)return;var la=parseFloat(D.lat),lo=parse
  if(r.dataset.u===u)return;r.dataset.u=u;
  r.innerHTML='<iframe src="'+u+'" title="Live radar" loading="lazy" style="width:100%;height:380px;border:0;border-radius:9px"></iframe><div class="dim" style="font-size:12px;margin-top:4px">Live radar by Windy.com. Needs an internet connection.</div>'}
 $("rdr_t").onclick=function(){D.radar=(D.radar===false);save();radar()};
-var TABS={utc:["main","clock"],wx:["main","wx"],tzs:["main","tz"],sunloc:["main","sun"],sfi:["prop","solar"],map:["prop","map"],gt_in:["prop","grid"],sp_list:["prop","spots"],bands:["more"],sat_list:["sat","passes"],trk_go:["sat","trk"],s_call:["more"]};
+var TABS={utc:["main","clock"],wx:["main","wx"],jd_d:["main","tz"],sunloc:["main","sun"],sfi:["prop","solar"],map:["prop","map"],gt_in:["prop","grid"],sp_list:["prop","spots"],bands:["more"],sat_list:["sat","passes"],trk_go:["sat","trk"],s_call:["more"]};
 function showTab(t){D.tab=t;save();$("app").dataset.t=t;glDraw();spMaybe();document.querySelectorAll("#app .card").forEach(function(c){c.style.display=c.dataset.tab===t?"":"none"});Array.prototype.forEach.call($("tabs").children,function(b){b.classList.toggle("on",b.dataset.t===t)})}
 Object.keys(TABS).forEach(function(id){var c=$(id).closest(".card");c.dataset.tab=TABS[id][0];if(TABS[id][1])c.dataset.k=TABS[id][1]});document.querySelector(".card.links").dataset.tab="more";
 $("tabs").onclick=function(e){var t=e.target.dataset.t;if(t)showTab(t)};
