@@ -198,8 +198,9 @@ ul{margin:8px 0 0;padding:0;list-style:none;font:14px ui-monospace,Menlo,Consola
 
 <div class="card">
  <div class="row"><span class="lbl">Live spots</span><span class="dim" id="sp_src" style="font-size:12px"></span></div>
- <div class="grid" style="margin-top:8px;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px"><select id="sp_b"><option value="">Bands</option><option>160m</option><option>80m</option><option>60m</option><option>40m</option><option>30m</option><option>20m</option><option>17m</option><option>15m</option><option>12m</option><option>10m</option><option>6m</option><option>2m</option><option>70cm</option></select><select id="sp_m"><option value="">Modes</option><option value="CW">CW</option><option value="PH">Phone</option><option value="DG">Digital</option></select><select id="sp_s"><option value="">Sources</option><option value="DX">DX cluster</option><option value="POTA">POTA</option><option value="SOTA">SOTA</option></select></div>
+ <div class="grid" style="margin-top:8px;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px"><button id="sp_b" style="padding:6px 4px;font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Bands</button><select id="sp_m"><option value="">Modes</option><option value="CW">CW</option><option value="PH">Phone</option><option value="DG">Digital</option></select><select id="sp_s"><option value="">Sources</option><option value="DX">DX cluster</option><option value="POTA">POTA</option><option value="SOTA">SOTA</option></select></div>
  <div class="row" style="margin-top:8px;gap:6px;justify-content:flex-start"><span class="dim" style="font-size:12px">Pins by:</span><button id="sp_c" style="padding:3px 10px;font-size:13px">Mode</button></div>
+ <div id="sp_bp" style="display:none;margin-top:8px;flex-wrap:wrap;gap:5px"></div>
  <label style="display:flex;gap:6px;align-items:center;margin-top:8px;font-size:13px;color:var(--tx)"><input type="checkbox" id="sp_lc" style="width:auto;padding:0"> <span id="sp_lct">General privileges only</span></label><div class="dim" id="sp_h" style="font-size:11px"></div>
  <div class="dim" id="sp_leg" style="font-size:11px;margin-top:6px"></div>
  <div id="sp_list" style="position:relative;margin-top:8px;display:grid;gap:4px;align-content:start;overflow-y:auto;flex:1 1 0;min-height:200px"></div>
@@ -602,8 +603,8 @@ function spFetch(){if(!SP)return;SP.t=Date.now();$("sp_n").textContent="Loading 
 function spMaybe(){if(!SP||$("app").dataset.t!=="prop"||Date.now()-SP.t<60000)return;spFetch()}
 function spLeg(){var h=SP.col==="band"?Object.keys(BC).map(function(k){return'<span style="color:'+BC[k]+'">\u25cf</span> '+k}).join(" "):'<span style="color:'+MC.CW+'">\u25cf</span> CW <span style="color:'+MC.PH+'">\u25cf</span> Phone <span style="color:'+MC.DG+'">\u25cf</span> Digital <span style="color:'+MC.OT+'">\u25cf</span> Other';$("sp_leg").innerHTML=h;$("sp_c").textContent=SP.col==="band"?"Band":"Mode"}
 function qrz(c){var p=String(c).toUpperCase().split("/").sort(function(a,b){return b.length-a.length})[0];return"https://www.qrz.com/db/"+encodeURIComponent(p)}
-function spRender(){if(!SP)return;var b=$("sp_b").value,m=$("sp_m").value,s=$("sp_s").value,now=Date.now();
- var lc=D.splc!==false,hid=0;SP.vis=SP.all.filter(function(x){if(!((!b||x.band===b)&&(!m||x.g===m)&&(!s||x.src===s)))return false;if(lc&&!inPriv(x)){hid++;return false}return true});
+function spRender(){if(!SP)return;var SB=D.spbs||[],m=$("sp_m").value,s=$("sp_s").value,now=Date.now();spBL();
+ var lc=D.splc!==false,hid=0;SP.vis=SP.all.filter(function(x){if(!((!SB.length||SB.indexOf(x.band)>-1)&&(!m||x.g===m)&&(!s||x.src===s)))return false;if(lc&&!inPriv(x)){hid++;return false}return true});
  $("sp_lct").textContent=CL[D.cls||2]+" privileges only";$("sp_h").textContent=lc&&hid?hid+" spot"+(hid>1?"s":"")+" hidden (outside "+CL[D.cls||2]+" privileges)":"";
  var st0=$("sp_list").scrollTop;$("sp_list").innerHTML=SP.vis.length?SP.vis.slice(0,80).map(function(x,i){var ag=Math.round((now-x.t)/6e4);return'<div data-i="'+i+'" style="display:grid;grid-template-columns:10px 58px 38px 1fr 26px;gap:6px;align-items:center;padding:4px 6px;border-radius:7px;font-size:13px;cursor:pointer;background:'+(SP.sel===x?"var(--line);box-shadow:inset 0 0 0 2px var(--acc)":"var(--bg)")+'"><i style="width:10px;height:10px;border-radius:50%;background:'+spCol(x)+'"></i><span>'+(x.f/1e6).toFixed(3)+'</span><span class="dim" style="font-size:11px">'+esc(x.mode.slice(0,5))+'</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><a href="'+qrz(x.call)+'" target="_blank" rel="noopener" title="Look up on QRZ" style="color:var(--tx);text-decoration:underline;text-decoration-color:var(--acc)"><b>'+esc(x.call)+'</b></a>'+(x.ref?' <span class="dim" style="font-size:11px">'+esc(x.ref)+'</span>':'')+'</span><span class="dim" style="font-size:11px">'+(ag<1?"<1":ag)+'m</span></div>'}).join(""):'<div class="dim" style="font-size:13px">'+(SP.t?"No spots match these filters.":"Waiting for spots\u2026")+'</div>';
  var si=SP.sel?SP.vis.indexOf(SP.sel):-1,sl2=$("sp_list"),re=si>-1?sl2.querySelector('[data-i="'+si+'"]'):null;sl2.scrollTop=st0;if(re&&(re.offsetTop<sl2.scrollTop||re.offsetTop+re.offsetHeight>sl2.scrollTop+sl2.clientHeight))sl2.scrollTop=re.offsetTop-sl2.clientHeight/2;
@@ -615,8 +616,8 @@ function spLayout(W,Hh,mv){var a=[];SP.vis.forEach(function(s){s._x=null;s._c=0;
 function spPins(x,W,Hh){if(!SP||!SP.vis)return;var mv=MV||{x0:0,y0:0,k:1};spLayout(W,Hh,mv);SP.vis.forEach(function(s){if(s.la==null)return;var px=s._x,py=s._y;if(s._c){x.beginPath();x.moveTo(s._cx,s._cy);x.lineTo(px,py);x.strokeStyle="rgba(255,255,255,.45)";x.lineWidth=1.5;x.stroke();x.beginPath();x.arc(s._cx,s._cy,3,0,7);x.fillStyle="rgba(255,255,255,.8)";x.fill()}x.beginPath();x.arc(px,py,7,0,7);x.fillStyle=spCol(s);x.fill();x.strokeStyle="rgba(10,16,26,.9)";x.lineWidth=2;x.stroke();})
  var q=SP.sel;if(q&&q.la!=null&&SP.vis.indexOf(q)>-1){var qx=q._x,qy=q._y;x.beginPath();x.arc(qx,qy,17,0,7);x.strokeStyle="rgba(255,255,255,.55)";x.lineWidth=3;x.stroke();x.beginPath();x.arc(qx,qy,10,0,7);x.fillStyle=spCol(q);x.fill();x.strokeStyle="#fff";x.lineWidth=3;x.stroke();x.font="bold 20px sans-serif";x.textAlign="left";x.textBaseline="middle";var lx=qx+22,tw=x.measureText(q.call).width;if(lx+tw>W-6)lx=qx-22-tw;x.lineWidth=5;x.strokeStyle="rgba(10,16,26,.95)";x.strokeText(q.call,lx,qy);x.fillStyle="#fff";x.fillText(q.call,lx,qy)}}
 SP={all:[],vis:[],col:D.spc||"mode",sel:null,t:0,src:""};
-$("sp_b").value=D.spb||"";$("sp_m").value=D.spm||"";$("sp_s").value=D.sps||"";
-["sp_b","sp_m","sp_s"].forEach(function(id){$(id).onchange=function(){D.spb=$("sp_b").value;D.spm=$("sp_m").value;D.sps=$("sp_s").value;save();SP.sel=null;spRender()}});
+$("sp_m").value=D.spm||"";$("sp_s").value=D.sps||"";
+["sp_m","sp_s"].forEach(function(id){$(id).onchange=function(){D.spm=$("sp_m").value;D.sps=$("sp_s").value;save();SP.sel=null;spRender()}});
 $("sp_c").onclick=function(){SP.col=SP.col==="band"?"mode":"band";D.spc=SP.col;save();spRender()};
 $("sp_list").onclick=function(e){var r=e.target.closest("[data-i]");if(!r)return;var s=SP.vis[+r.dataset.i];SP.sel=s;if(s.la!=null){D.tgt=s.la.toFixed(2)+","+s.lo.toFixed(2);save();$("bm_in").value=D.tgt;beam();gtShow(grid(s.la,s.lo));$("map_pin").textContent=s.call+" \u00b7 "+(s.f/1e6).toFixed(3)+" MHz \u00b7 "+s.mode+" \u00b7 aimed in Beam heading"}spRender()};
 (function(){var cv=$("map");cv.style.cursor="pointer";cv.insertAdjacentHTML("afterend",'<div class="dim" id="map_pin" style="font-size:13px;margin-top:6px;min-height:18px"></div>');
@@ -666,6 +667,15 @@ function inPriv(s){var f=s.f/1e6,g=s.g,mo=s.mode||"",b=null,i,j;for(i=0;i<BANDS.
   else if(t==="u"){if(g==="CW"||g==="DG"||(g==="PH"&&/SSB|USB/i.test(mo)))return true}}
  return false}
 $("sp_lc").checked=D.splc!==false;$("sp_lc").onchange=function(){D.splc=this.checked;save();SP.sel=null;spRender()};
+var SPBO=false;if(D.spb&&!D.spbs){D.spbs=[D.spb];delete D.spb;save()}
+function spBL(){var n=(D.spbs||[]).length,t=$("sp_b");t.textContent=n===0?"Bands \u25be":n===1?D.spbs[0]:n<=2?D.spbs.join(" "):n+" bands";t.classList.toggle("on",n>0);if(SPBO)spBP()}
+function spBP(){var p=$("sp_bp"),sel=D.spbs||[],cl=D.cls||2;p.style.display=SPBO?"flex":"none";if(!SPBO)return;
+ p.innerHTML=BANDS.map(function(b){var on=sel.indexOf(b.n)>-1,ok=(b[CK[cl]]||[]).length>0;return'<button data-b="'+b.n+'"'+(on?' class="on"':'')+' title="'+(ok?"":"No "+CL[cl]+" privileges on this band")+'" style="padding:4px 8px;font-size:13px;'+(ok?"":"opacity:.45")+'"><span style="'+(on?"":"color:"+BC[b.n])+'">\u25cf</span> '+b.n+'</button>'}).join("")+'<button data-a="hf" style="padding:4px 8px;font-size:13px">HF only</button><button data-a="clear" style="padding:4px 8px;font-size:13px">Clear</button>'}
+$("sp_b").onclick=function(){SPBO=!SPBO;spBP()};
+$("sp_bp").onclick=function(e){var n=e.target.closest("button");if(!n)return;var s=(D.spbs||[]).slice();
+ if(n.dataset.a==="clear")s=[];else if(n.dataset.a==="hf")s=BANDS.filter(function(b){return b.lo<30}).map(function(b){return b.n});
+ else if(n.dataset.b){var i=s.indexOf(n.dataset.b);if(i>-1)s.splice(i,1);else s.push(n.dataset.b)}
+ D.spbs=s;save();SP.sel=null;spRender()};
 function satInit(){try{var c=JSON.parse(localStorage.getItem("hc_tle")||"null");if(c&&c.x)satLoad(c.x,c.t)}catch(e){}
  $("trk_mode").value=D.tm||"top";$("trk_tol").value=D.tt||"10";$("trk_dec").value=D.td||"";trxInit();satUI();satCalc();if(!SAT.t||Date.now()-SAT.t>864e5)satFetch()}
 satInit();
