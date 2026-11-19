@@ -200,6 +200,7 @@ ul{margin:8px 0 0;padding:0;list-style:none;font:14px ui-monospace,Menlo,Consola
  <div class="row"><span class="lbl">Live spots</span><span class="dim" id="sp_src" style="font-size:12px"></span></div>
  <div class="grid" style="margin-top:8px;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px"><select id="sp_b"><option value="">Bands</option><option>160m</option><option>80m</option><option>60m</option><option>40m</option><option>30m</option><option>20m</option><option>17m</option><option>15m</option><option>12m</option><option>10m</option><option>6m</option><option>2m</option><option>70cm</option></select><select id="sp_m"><option value="">Modes</option><option value="CW">CW</option><option value="PH">Phone</option><option value="DG">Digital</option></select><select id="sp_s"><option value="">Sources</option><option value="DX">DX cluster</option><option value="POTA">POTA</option><option value="SOTA">SOTA</option></select></div>
  <div class="row" style="margin-top:8px;gap:6px;justify-content:flex-start"><span class="dim" style="font-size:12px">Pins by:</span><button id="sp_c" style="padding:3px 10px;font-size:13px">Mode</button></div>
+ <label style="display:flex;gap:6px;align-items:center;margin-top:8px;font-size:13px;color:var(--tx)"><input type="checkbox" id="sp_lc" style="width:auto;padding:0"> <span id="sp_lct">General privileges only</span></label><div class="dim" id="sp_h" style="font-size:11px"></div>
  <div class="dim" id="sp_leg" style="font-size:11px;margin-top:6px"></div>
  <div id="sp_list" style="position:relative;margin-top:8px;display:grid;gap:4px;align-content:start;overflow-y:auto;flex:1 1 0;min-height:200px"></div>
  <div class="dim" id="sp_n" style="font-size:11px;margin-top:6px"></div>
@@ -411,7 +412,7 @@ function bands(){if(!BANDS)return;var cls=D.cls||2,h="",t;
  else t=ST.el===null?"Set a location for condition estimates. Tap a band for details.":"Estimated for your station: "+(ST.el>0?"daytime":"nighttime")+", SFI "+(SOL.sfi==null?"n/a":SOL.sfi)+", Kp "+(SOL.kp==null?"n/a":SOL.kp)+". Tap a band for details.";
  $("bdet").innerHTML=t;hf()}
 $("bands").onclick=function(e){var r=e.target.closest("[data-i]");if(r){var i=+r.dataset.i;openB=openB===i?null:i;bands()}};
-$("cls").onclick=function(e){var c=+e.target.dataset.c;if(c){D.cls=c;save();bands()}};
+$("cls").onclick=function(e){var c=+e.target.dataset.c;if(c){D.cls=c;save();bands();spRender()}};
 var CP=["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
 function beam(){if(!CP)return;var n=$("bm_n"),s=D.tgt||"",lat=parseFloat(D.lat),lon=parseFloat(D.lon);
  $("bmfrom").textContent=isNaN(lat)?"Set your location first":"From grid "+grid(lat,lon);
@@ -602,7 +603,8 @@ function spMaybe(){if(!SP||$("app").dataset.t!=="prop"||Date.now()-SP.t<60000)re
 function spLeg(){var h=SP.col==="band"?Object.keys(BC).map(function(k){return'<span style="color:'+BC[k]+'">\u25cf</span> '+k}).join(" "):'<span style="color:'+MC.CW+'">\u25cf</span> CW <span style="color:'+MC.PH+'">\u25cf</span> Phone <span style="color:'+MC.DG+'">\u25cf</span> Digital <span style="color:'+MC.OT+'">\u25cf</span> Other';$("sp_leg").innerHTML=h;$("sp_c").textContent=SP.col==="band"?"Band":"Mode"}
 function qrz(c){var p=String(c).toUpperCase().split("/").sort(function(a,b){return b.length-a.length})[0];return"https://www.qrz.com/db/"+encodeURIComponent(p)}
 function spRender(){if(!SP)return;var b=$("sp_b").value,m=$("sp_m").value,s=$("sp_s").value,now=Date.now();
- SP.vis=SP.all.filter(function(x){return(!b||x.band===b)&&(!m||x.g===m)&&(!s||x.src===s)});
+ var lc=D.splc!==false,hid=0;SP.vis=SP.all.filter(function(x){if(!((!b||x.band===b)&&(!m||x.g===m)&&(!s||x.src===s)))return false;if(lc&&!inPriv(x)){hid++;return false}return true});
+ $("sp_lct").textContent=CL[D.cls||2]+" privileges only";$("sp_h").textContent=lc&&hid?hid+" spot"+(hid>1?"s":"")+" hidden (outside "+CL[D.cls||2]+" privileges)":"";
  var st0=$("sp_list").scrollTop;$("sp_list").innerHTML=SP.vis.length?SP.vis.slice(0,80).map(function(x,i){var ag=Math.round((now-x.t)/6e4);return'<div data-i="'+i+'" style="display:grid;grid-template-columns:10px 58px 38px 1fr 26px;gap:6px;align-items:center;padding:4px 6px;border-radius:7px;font-size:13px;cursor:pointer;background:'+(SP.sel===x?"var(--line);box-shadow:inset 0 0 0 2px var(--acc)":"var(--bg)")+'"><i style="width:10px;height:10px;border-radius:50%;background:'+spCol(x)+'"></i><span>'+(x.f/1e6).toFixed(3)+'</span><span class="dim" style="font-size:11px">'+esc(x.mode.slice(0,5))+'</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><a href="'+qrz(x.call)+'" target="_blank" rel="noopener" title="Look up on QRZ" style="color:var(--tx);text-decoration:underline;text-decoration-color:var(--acc)"><b>'+esc(x.call)+'</b></a>'+(x.ref?' <span class="dim" style="font-size:11px">'+esc(x.ref)+'</span>':'')+'</span><span class="dim" style="font-size:11px">'+(ag<1?"<1":ag)+'m</span></div>'}).join(""):'<div class="dim" style="font-size:13px">'+(SP.t?"No spots match these filters.":"Waiting for spots\u2026")+'</div>';
  var si=SP.sel?SP.vis.indexOf(SP.sel):-1,sl2=$("sp_list"),re=si>-1?sl2.querySelector('[data-i="'+si+'"]'):null;sl2.scrollTop=st0;if(re&&(re.offsetTop<sl2.scrollTop||re.offsetTop+re.offsetHeight>sl2.scrollTop+sl2.clientHeight))sl2.scrollTop=re.offsetTop-sl2.clientHeight/2;
  spLeg();var mp=$("map_pin");if(SP.sel&&mp&&mp.textContent.indexOf("QRZ")<0)mp.insertAdjacentHTML("beforeend",' · <a href="'+qrz(SP.sel.call)+'" target="_blank" rel="noopener" style="color:var(--acc)">Open '+esc(SP.sel.call)+' on QRZ</a>');sunmap()}
@@ -653,6 +655,17 @@ function spOff(){var c=null;try{c=JSON.parse(localStorage.getItem("hc_sp")||"nul
  if("serviceWorker" in navigator&&location.protocol.indexOf("http")===0){navigator.serviceWorker.register("sw.js").then(function(r){st.textContent="Offline mode is ready after the first load.";navigator.serviceWorker.ready.then(function(){st.textContent="Offline mode ready. Live data shows the last saved values when you have no signal."});
    r.addEventListener("updatefound",function(){var n=r.installing;if(n)n.addEventListener("statechange",function(){if(n.state==="installed"&&navigator.serviceWorker.controller)toast()})})}).catch(function(){st.textContent="Offline mode isn\u2019t available here."})}
  else st.textContent="Offline mode works on the hosted https version."})();
+function inPriv(s){var f=s.f/1e6,g=s.g,mo=s.mode||"",b=null,i,j;for(i=0;i<BANDS.length;i++)if(f>=BANDS[i].lo-1e-4&&f<=BANDS[i].hi+1e-4){b=BANDS[i];break}if(!b)return false;
+ var sg=b[CK[D.cls||2]]||[];
+ for(j=0;j<sg.length;j++){var q=sg[j],t=q[2],m=t==="u"?0:(g==="CW"?.0002:.003);if(f<q[0]+m-1e-9||f>q[1]-m+1e-9)continue;
+  if(t==="a"||!mo)return true;
+  if(t==="w"){if(g==="CW")return true}
+  else if(t==="c"){if(g==="CW"||g==="DG")return true}
+  else if(t==="p"){if(g==="CW"||g==="PH")return true}
+  else if(t==="s"){if(g==="CW"||(g==="PH"&&/SSB|USB|LSB/i.test(mo)))return true}
+  else if(t==="u"){if(g==="CW"||g==="DG"||(g==="PH"&&/SSB|USB/i.test(mo)))return true}}
+ return false}
+$("sp_lc").checked=D.splc!==false;$("sp_lc").onchange=function(){D.splc=this.checked;save();SP.sel=null;spRender()};
 function satInit(){try{var c=JSON.parse(localStorage.getItem("hc_tle")||"null");if(c&&c.x)satLoad(c.x,c.t)}catch(e){}
  $("trk_mode").value=D.tm||"top";$("trk_tol").value=D.tt||"10";$("trk_dec").value=D.td||"";trxInit();satUI();satCalc();if(!SAT.t||Date.now()-SAT.t>864e5)satFetch()}
 satInit();
