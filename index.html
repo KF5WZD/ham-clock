@@ -199,7 +199,7 @@ ul{margin:8px 0 0;padding:0;list-style:none;font:14px ui-monospace,Menlo,Consola
 </div>
 
 <div class="card">
- <div class="row"><span class="lbl">Live spots</span><span class="dim" id="sp_src" style="font-size:12px"></span></div>
+ <div class="row"><span class="lbl">Live spots</span><span style="display:flex;align-items:center;gap:6px"><span class="dim" id="sp_src" style="font-size:12px"></span><button id="sp_r" title="Refresh spots now" style="padding:2px 9px;font-size:15px">↻</button></span></div>
  <div class="grid" style="margin-top:8px;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px"><button id="sp_b" style="padding:6px 4px;font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Bands</button><select id="sp_m"><option value="">Modes</option><option value="CW">CW</option><option value="PH">Phone</option><option value="DG">Digital</option></select><select id="sp_s"><option value="">Sources</option><option value="DX">DX cluster</option><option value="POTA">POTA</option><option value="SOTA">SOTA</option></select></div>
  <div class="row" style="margin-top:8px;gap:6px;justify-content:flex-start"><span class="dim" style="font-size:12px">Pins by:</span><button id="sp_c" style="padding:3px 10px;font-size:13px">Mode</button></div>
  <div id="sp_bp" style="display:none;margin-top:8px;flex-wrap:wrap;gap:5px"></div>
@@ -598,7 +598,7 @@ function spSH(j){var a=Array.isArray(j)?j:(j&&j.spots)||[],o=[];a.forEach(functi
  o.push({call:s.dx_call||s.activator||"?",f:f,mode:String(s.mode||"").toUpperCase(),band:bandOf(f)||s.band||"",t:t||Date.now(),src:src,ref:ref,la:la,lo:lo})});return o}
 function spPOTA(j){return(j||[]).map(function(s){var f=parseFloat(s.frequency)*1e3,st=String(s.spotTime||""),la=s.latitude!=null?+s.latitude:null,lo=s.longitude!=null?+s.longitude:null;return{call:s.activator||"?",f:f,mode:String(s.mode||"").toUpperCase(),band:bandOf(f),t:Date.parse(st+(/Z$/.test(st)?"":"Z"))||Date.now(),src:"POTA",ref:s.reference||"",la:isNaN(la)?null:la,lo:isNaN(lo)?null:lo}}).filter(function(s){return s.f>0})}
 function spSet(a,src){var seen={},o=[],now=Date.now();a.forEach(function(s){s.g=spGrp(s.mode)});a.sort(function(x,y){return y.t-x.t}).forEach(function(s){var k=s.call+s.band;if(seen[k]||now-s.t>36e5)return;seen[k]=1;o.push(s)});
- SP.all=o;SP.t=now;SP.src=src;try{localStorage.setItem("hc_sp",JSON.stringify({t:now,all:o.slice(0,120)}))}catch(e){}var d=new Date();$("sp_src").textContent=src+" \u00b7 "+hm(d.getUTCHours()*60+d.getUTCMinutes(),1);$("sp_n").textContent="Spots from the last hour. They are reports from other stations and can be wrong.";spRender()}
+ if(SP.sel){var sk=SP.sel.call+SP.sel.band;SP.sel=o.filter(function(x){return x.call+x.band===sk})[0]||null}SP.all=o;SP.t=now;SP.src=src;try{localStorage.setItem("hc_sp",JSON.stringify({t:now,all:o.slice(0,120)}))}catch(e){}var d=new Date();$("sp_src").textContent=src+" \u00b7 "+hm(d.getUTCHours()*60+d.getUTCMinutes(),1);$("sp_n").textContent="Spots from the last hour. They are reports from other stations and can be wrong.";spRender()}
 function spFetch(){if(!SP)return;SP.t=Date.now();$("sp_n").textContent="Loading spots\u2026";
  fetch("https://spothole.app/api/v1/spots?limit=200").then(function(r){if(!r.ok)throw 1;return r.json()}).then(function(j){var a=spSH(j);if(!a.length)throw 1;spSet(a,"Spothole")})
  .catch(function(){fetch("https://api.pota.app/spot/activator").then(function(r){if(!r.ok)throw 1;return r.json()}).then(function(j){spSet(spPOTA(j),"POTA (backup)")}).catch(function(){if(spOff())return;$("sp_n").textContent="Couldn\u2019t load live spots. Needs an internet connection."})})}
@@ -717,6 +717,8 @@ function fcast(){var el=$("fc");if(!el)return;var la=parseFloat(D.lat),lo=parseF
   if(!o.length)throw 1;done(o.slice(0,7))}).catch(off)}
  else fetch("https://api.open-meteo.com/v1/forecast?latitude="+la+"&longitude="+lo+"&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=7&timezone=auto&temperature_unit="+(F?"fahrenheit":"celsius")).then(function(r){return r.json()}).then(function(j){var d=j.daily;if(!d||!d.time)throw 1;
   done(d.time.map(function(t,i){return{d:t,i:wmo(d.weather_code[i]),hi:d.temperature_2m_max[i],lo:d.temperature_2m_min[i],p:d.precipitation_probability_max[i]}}))}).catch(off)}
+$("sp_r").onclick=function(){var b=this,n=Date.now();if(n-(SP.rt||0)<5000){$("sp_n").textContent="Just refreshed. Give it a few seconds.";return}SP.rt=n;b.disabled=true;b.style.opacity=".5";spFetch();setTimeout(function(){b.disabled=false;b.style.opacity=""},5000)};
+setInterval(function(){if(SP&&SP.all.length&&$("app").dataset.t==="prop")spRender()},30000);
 function satInit(){try{var c=JSON.parse(localStorage.getItem("hc_tle")||"null");if(c&&c.x)satLoad(c.x,c.t)}catch(e){}
  $("trk_mode").value=D.tm||"top";$("trk_tol").value=D.tt||"10";$("trk_dec").value=D.td||"";trxInit();satUI();satCalc();if(!SAT.t||Date.now()-SAT.t>864e5)satFetch()}
 satInit();
