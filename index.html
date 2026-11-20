@@ -68,6 +68,7 @@ body.red button,body.red select,body.red input,body.red .links a{background:#0f0
 body.red button.on{background:var(--acc);color:#0e0404}
 body.red canvas,body.red #bands,body.red iframe{filter:grayscale(1) sepia(1) saturate(5) hue-rotate(-40deg) brightness(.6)}
 body.red .alert{background:#2a0b0b}
+body.red .fc-i{filter:grayscale(1) sepia(1) saturate(5) hue-rotate(-40deg) brightness(.8)}
 @keyframes fl{50%{background:#5a3a3a}}
 @media(min-width:760px){.big{font-size:56px}.big.loc{font-size:40px}}
 ul{margin:8px 0 0;padding:0;list-style:none;font:14px ui-monospace,Menlo,Consolas,monospace}
@@ -288,7 +289,7 @@ function fail(){var c=null;try{c=JSON.parse(localStorage.getItem("hc_wx")||"null
  $("wx").textContent="Weather unavailable";
  $("wx2").textContent="Needs a network connection and a lat/lon in Settings. Some hosts (including this preview) block outside requests; hosted or downloaded copies work."}
 function weather(){
- sunmap();beam();satCalc();gtDraw();radar();
+ sunmap();beam();satCalc();gtDraw();radar();fcast();
  $("wsrc").textContent=SRC[D.src]||"";
  $("grid").textContent=D.lat&&D.lon?"Grid "+grid(D.lat,D.lon)+"  ·  "+(+D.lat).toFixed(2)+", "+(+D.lon).toFixed(2):"Set lat/lon in Settings for weather and grid square";
  var F=D.u==="F";
@@ -698,6 +699,24 @@ $("sp_bp").onclick=function(e){var n=e.target.closest("button");if(!n)return;var
  w.insertAdjacentHTML("beforeend",'<div class="lbl" style="margin:18px 0 6px">World clocks</div>');w.appendChild(tz);
  jb.style.margin="0";jb.style.padding="0";jb.style.border="0";jb.style.flex="1";jb.style.display="flex";jb.style.flexDirection="column";
  jb.querySelector(".lbl").textContent="Julian date";var cg=$("cal_g");cg.style.flex="1";cg.style.alignContent="space-evenly"})();
+(function(){var wc=$("wx").closest(".card");wc.firstElementChild.insertAdjacentHTML("afterend",'<div id="fc_wrap" style="margin:6px 0 12px"><div class="lbl" style="margin-bottom:6px">7-day forecast</div><div id="fc" style="display:grid;grid-auto-flow:column;grid-auto-columns:minmax(74px,1fr);gap:6px;overflow-x:auto"></div><div class="dim" id="fc_n" style="font-size:11px;margin-top:4px"></div></div>')})();
+var FC={t:0,k:""};
+function wmo(c){return c===0?"☀️":c===1?"🌤️":c===2?"⛅":c===3?"☁️":(c===45||c===48)?"🌫️":(c>=51&&c<=57)?"🌦️":(c>=61&&c<=67)?"🌧️":(c>=71&&c<=77)?"❄️":(c>=80&&c<=82)?"🌦️":(c===85||c===86)?"🌨️":c>=95?"⛈️":"☁️"}
+function nwsIc(s){s=(s||"").toLowerCase();return/thunder/.test(s)?"⛈️":/snow|flurr|sleet|ice|wintry/.test(s)?"❄️":/rain|shower|drizzle/.test(s)?"🌧️":/fog|haze|smoke/.test(s)?"🌫️":/partly|mostly sunny|mostly clear/.test(s)?"⛅":/sunny|clear/.test(s)?"☀️":/cloud/.test(s)?"☁️":"⛅"}
+function fcRender(days,note){var td=new Date(),ts=td.getFullYear()+"-"+p2(td.getMonth()+1)+"-"+p2(td.getDate());
+ $("fc").innerHTML=days.slice(0,7).map(function(x,i){var dt=new Date(x.d+"T12:00:00"),nm=x.d===ts?"Today":dt.toLocaleDateString([],{weekday:"short"});
+  return'<div style="text-align:center;padding:8px 4px;border:1px solid '+(x.d===ts?"var(--acc)":"var(--line)")+';border-radius:10px;background:var(--bg)"><div class="dim" style="font-size:12px">'+nm+'</div><div class="fc-i" style="font-size:26px;line-height:1.3">'+x.i+'</div><div style="font-weight:600">'+(x.hi==null?"\u2014":Math.round(x.hi)+"\u00b0")+'<span class="dim" style="font-weight:400"> '+(x.lo==null?"":Math.round(x.lo)+"\u00b0")+'</span></div><div class="dim" style="font-size:11px">'+(x.p?"💧 "+Math.round(x.p)+"%":"&nbsp;")+'</div></div>'}).join("");$("fc_n").textContent=note||""}
+function fcast(){var el=$("fc");if(!el)return;var la=parseFloat(D.lat),lo=parseFloat(D.lon);
+ if(isNaN(la)||isNaN(lo)){el.innerHTML='<div class="dim" style="font-size:13px">Set your location to see the forecast.</div>';return}
+ var key=[D.lat,D.lon,D.u,D.src].join("|");if(FC.k===key&&Date.now()-FC.t<18e5)return;FC.k=key;FC.t=Date.now();var F=D.u==="F";
+ function done(days){try{localStorage.setItem("hc_fc",JSON.stringify({t:Date.now(),k:key,days:days}))}catch(e){}fcRender(days,"")}
+ function off(){var c=null;try{c=JSON.parse(localStorage.getItem("hc_fc")||"null")}catch(e){}if(c&&c.k===key){var d=new Date(c.t);fcRender(c.days,"Saved "+p2(d.getHours())+":"+p2(d.getMinutes())+" (offline)")}else{FC.t=0;el.innerHTML='<div class="dim" style="font-size:13px">Forecast unavailable. Needs an internet connection.</div>';$("fc_n").textContent=""}}
+ if(D.src==="nws"){fetch("https://api.weather.gov/points/"+la.toFixed(4)+","+lo.toFixed(4)).then(function(r){return r.json()}).then(function(j){return fetch(j.properties.forecast)}).then(function(r){return r.json()}).then(function(j){
+  var m={},o=[],cv=function(t){return F?t:Math.round((t-32)*5/9)};j.properties.periods.forEach(function(p){var d=p.startTime.slice(0,10),e=m[d];if(!e){e=m[d]={d:d,hi:null,lo:null,i:null,p:0};o.push(e)}var t=p.temperatureUnit==="F"?p.temperature:p.temperature*9/5+32;
+   if(p.isDaytime){e.hi=cv(t);e.i=nwsIc(p.shortForecast)}else{e.lo=cv(t);if(e.i==null)e.i=nwsIc(p.shortForecast)}var pp=p.probabilityOfPrecipitation&&p.probabilityOfPrecipitation.value;if(pp!=null)e.p=Math.max(e.p,pp)});
+  if(!o.length)throw 1;done(o.slice(0,7))}).catch(off)}
+ else fetch("https://api.open-meteo.com/v1/forecast?latitude="+la+"&longitude="+lo+"&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=7&timezone=auto&temperature_unit="+(F?"fahrenheit":"celsius")).then(function(r){return r.json()}).then(function(j){var d=j.daily;if(!d||!d.time)throw 1;
+  done(d.time.map(function(t,i){return{d:t,i:wmo(d.weather_code[i]),hi:d.temperature_2m_max[i],lo:d.temperature_2m_min[i],p:d.precipitation_probability_max[i]}}))}).catch(off)}
 function satInit(){try{var c=JSON.parse(localStorage.getItem("hc_tle")||"null");if(c&&c.x)satLoad(c.x,c.t)}catch(e){}
  $("trk_mode").value=D.tm||"top";$("trk_tol").value=D.tt||"10";$("trk_dec").value=D.td||"";trxInit();satUI();satCalc();if(!SAT.t||Date.now()-SAT.t>864e5)satFetch()}
 satInit();
