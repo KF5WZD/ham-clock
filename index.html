@@ -47,6 +47,9 @@ main{max-width:1200px;margin:0 auto;padding:14px;display:grid;gap:12px}
 #tabs{display:flex;gap:6px}
 #tabs button{flex:1;padding:10px 4px;font-weight:600}
 #mz button{padding:4px 9px;font-size:13px}
+#app[data-t=log]{grid-template-columns:minmax(0,2fr) minmax(0,1fr);align-items:start}
+[data-k=lgmain]{order:1}[data-k=lgtools]{order:2}
+@media(max-width:899px){#app[data-t=log]{grid-template-columns:minmax(0,1fr)}}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
 .row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 h1{font-size:15px;margin:0;color:var(--acc);letter-spacing:.08em}
@@ -94,7 +97,7 @@ ul{margin:8px 0 0;padding:0;list-style:none;font:14px ui-monospace,Menlo,Consola
 </main>
 <main id="app" style="display:none">
 <div id="alert" class="alert" style="display:none"></div>
-<div id="tabs"><button data-t="main">Main</button><button data-t="prop">Prop &amp; Map</button><button data-t="sat">Satellites</button><button data-t="more">More</button></div>
+<div id="tabs"><button data-t="main">Main</button><button data-t="prop">Prop &amp; Map</button><button data-t="sat">Satellites</button><button data-t="log">Log</button><button data-t="more">More</button></div>
 <div class="card">
  <div class="row"><div><div class="lbl" style="margin-bottom:2px">Zulu Shack</div><h1 id="cs">KF5WZD</h1></div><span><button id="rd">Red mode</button> <button id="h12">24h</button></span></div>
  <div class="lbl" style="margin-top:8px">UTC</div>
@@ -203,7 +206,7 @@ ul{margin:8px 0 0;padding:0;list-style:none;font:14px ui-monospace,Menlo,Consola
  <div class="grid" style="margin-top:8px;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px"><button id="sp_b" style="padding:6px 4px;font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Bands</button><select id="sp_m"><option value="">Modes</option><option value="CW">CW</option><option value="PH">Phone</option><option value="DG">Digital</option></select><select id="sp_s"><option value="">Sources</option><option value="DX">DX cluster</option><option value="POTA">POTA</option><option value="SOTA">SOTA</option></select></div>
  <div class="row" style="margin-top:8px;gap:6px;justify-content:flex-start"><span class="dim" style="font-size:12px">Pins by:</span><button id="sp_c" style="padding:3px 10px;font-size:13px">Mode</button></div>
  <div id="sp_bp" style="display:none;margin-top:8px;flex-wrap:wrap;gap:5px"></div>
- <label style="display:flex;gap:6px;align-items:center;margin-top:8px;font-size:13px;color:var(--tx)"><input type="checkbox" id="sp_lc" style="width:auto;padding:0"> <span id="sp_lct">General privileges only</span></label><div class="dim" id="sp_h" style="font-size:11px"></div>
+ <label style="display:flex;gap:6px;align-items:center;margin-top:8px;font-size:13px;color:var(--tx)"><input type="checkbox" id="sp_lc" style="width:auto;padding:0"> <span id="sp_lct">General privileges only</span></label><label style="display:flex;gap:6px;align-items:center;margin-top:6px;font-size:13px;color:var(--tx)"><input type="checkbox" id="sp_hw" style="width:auto;padding:0"> <span>Hide stations worked today on that band</span></label><div class="dim" id="sp_h" style="font-size:11px"></div>
  <div class="dim" id="sp_leg" style="font-size:11px;margin-top:6px"></div>
  <div id="sp_list" style="position:relative;margin-top:8px;display:grid;gap:4px;align-content:start;overflow-y:auto;flex:1 1 0;min-height:200px"></div>
  <div class="dim" id="sp_n" style="font-size:11px;margin-top:6px"></div>
@@ -370,7 +373,7 @@ function sunmap(){
  x.strokeStyle="rgba(219,229,240,.12)";x.lineWidth=1;
  var nl=k>=3?36:12,na=k>=3?18:6;for(i=1;i<nl;i++){var gx=(i*W/nl-mv.x0)*k;x.beginPath();x.moveTo(gx,0);x.lineTo(gx,Hh);x.stroke()}
  for(i=1;i<na;i++){var gy=(i*Hh/na-mv.y0)*k;x.beginPath();x.moveTo(0,gy);x.lineTo(W,gy);x.stroke()}
- if(typeof spPins==="function")spPins(x,W,Hh);
+ if(typeof spPins==="function")spPins(x,W,Hh);x.globalAlpha=1;
  function dot(la,lo,col,rad){x.beginPath();x.arc(((lo+180)/360*W-mv.x0)*k,((90-la)/180*Hh-mv.y0)*k,rad,0,7);x.fillStyle=col;x.fill();x.strokeStyle="#fff";x.lineWidth=2;x.stroke()}
  dot(s.dec/R,slon,"#f2c879",10);if(has)dot(lat,lon,"#7fb2e5",9);
  $("mapinfo").textContent="Updated "+hm(um,1)+(k>1.01?" \u00b7 "+k.toFixed(1)+"\u00d7":"");bands()}
@@ -595,8 +598,8 @@ function spSH(j){var a=Array.isArray(j)?j:(j&&j.spots)||[],o=[];a.forEach(functi
  if((la==null||lo==null||isNaN(la)||isNaN(lo))&&s.dx_grid){var g=g2ll(String(s.dx_grid).slice(0,6));if(g){la=g[0];lo=g[1]}}
  if(la==null||lo==null||isNaN(la)||isNaN(lo)){la=null;lo=null}
  var ref=Array.isArray(s.sig_refs)?s.sig_refs.map(function(r){return typeof r==="object"&&r?(r.id||""):r}).join(","):"";
- o.push({call:s.dx_call||s.activator||"?",f:f,mode:String(s.mode||"").toUpperCase(),band:bandOf(f)||s.band||"",t:t||Date.now(),src:src,ref:ref,la:la,lo:lo})});return o}
-function spPOTA(j){return(j||[]).map(function(s){var f=parseFloat(s.frequency)*1e3,st=String(s.spotTime||""),la=s.latitude!=null?+s.latitude:null,lo=s.longitude!=null?+s.longitude:null;return{call:s.activator||"?",f:f,mode:String(s.mode||"").toUpperCase(),band:bandOf(f),t:Date.parse(st+(/Z$/.test(st)?"":"Z"))||Date.now(),src:"POTA",ref:s.reference||"",la:isNaN(la)?null:la,lo:isNaN(lo)?null:lo}}).filter(function(s){return s.f>0})}
+ o.push({nm:s.dx_name||"",qth:s.dx_qth||"",gr:s.dx_grid||"",st:s.dx_state||"",call:s.dx_call||s.activator||"?",f:f,mode:String(s.mode||"").toUpperCase(),band:bandOf(f)||s.band||"",t:t||Date.now(),src:src,ref:ref,la:la,lo:lo})});return o}
+function spPOTA(j){return(j||[]).map(function(s){var f=parseFloat(s.frequency)*1e3,st=String(s.spotTime||""),la=s.latitude!=null?+s.latitude:null,lo=s.longitude!=null?+s.longitude:null;return{nm:"",qth:s.name||"",gr:s.grid6||s.grid4||"",st:/^[A-Z]{2}-([A-Z]{2})$/.test(s.locationDesc||"")?(s.locationDesc||"").slice(3):"",call:s.activator||"?",f:f,mode:String(s.mode||"").toUpperCase(),band:bandOf(f),t:Date.parse(st+(/Z$/.test(st)?"":"Z"))||Date.now(),src:"POTA",ref:s.reference||"",la:isNaN(la)?null:la,lo:isNaN(lo)?null:lo}}).filter(function(s){return s.f>0})}
 function spSet(a,src){var seen={},o=[],now=Date.now();a.forEach(function(s){s.g=spGrp(s.mode)});a.sort(function(x,y){return y.t-x.t}).forEach(function(s){var k=s.call+s.band;if(seen[k]||now-s.t>36e5)return;seen[k]=1;o.push(s)});
  if(SP.sel){var sk=SP.sel.call+SP.sel.band;SP.sel=o.filter(function(x){return x.call+x.band===sk})[0]||null}SP.all=o;SP.t=now;SP.src=src;try{localStorage.setItem("hc_sp",JSON.stringify({t:now,all:o.slice(0,120)}))}catch(e){}var d=new Date();$("sp_src").textContent=src+" \u00b7 "+hm(d.getUTCHours()*60+d.getUTCMinutes(),1);$("sp_n").textContent="Spots from the last hour. They are reports from other stations and can be wrong.";spRender()}
 function spFetch(){if(!SP)return;SP.t=Date.now();$("sp_n").textContent="Loading spots\u2026";
@@ -606,17 +609,17 @@ function spMaybe(){if(!SP||$("app").dataset.t!=="prop"||Date.now()-SP.t<60000)re
 function spLeg(){var h=SP.col==="band"?Object.keys(BC).map(function(k){return'<span style="color:'+BC[k]+'">\u25cf</span> '+k}).join(" "):'<span style="color:'+MC.CW+'">\u25cf</span> CW <span style="color:'+MC.PH+'">\u25cf</span> Phone <span style="color:'+MC.DG+'">\u25cf</span> Digital <span style="color:'+MC.OT+'">\u25cf</span> Other';$("sp_leg").innerHTML=h;$("sp_c").textContent=SP.col==="band"?"Band":"Mode"}
 function qrz(c){var p=String(c).toUpperCase().split("/").sort(function(a,b){return b.length-a.length})[0];return"https://www.qrz.com/db/"+encodeURIComponent(p)}
 function spRender(){if(!SP)return;var SB=D.spbs||[],m=$("sp_m").value,s=$("sp_s").value,now=Date.now();spBL();
- var lc=D.splc!==false,hid=0;SP.vis=SP.all.filter(function(x){if(!((!SB.length||SB.indexOf(x.band)>-1)&&(!m||x.g===m)&&(!s||x.src===s)))return false;if(lc&&!inPriv(x)){hid++;return false}return true});
+ var lc=D.splc!==false,hid=0;SP.vis=SP.all.filter(function(x){if(!((!SB.length||SB.indexOf(x.band)>-1)&&(!m||x.g===m)&&(!s||x.src===s)))return false;if(lc&&!inPriv(x)){hid++;return false}if(D.sphw&&lgWorked(x)===2)return false;return true});
  $("sp_lct").textContent=CL[D.cls||2]+" privileges only";$("sp_h").textContent=lc&&hid?hid+" spot"+(hid>1?"s":"")+" hidden (outside "+CL[D.cls||2]+" privileges)":"";
- var st0=$("sp_list").scrollTop;$("sp_list").innerHTML=SP.vis.length?SP.vis.slice(0,80).map(function(x,i){var ag=Math.round((now-x.t)/6e4);return'<div data-i="'+i+'" style="display:grid;grid-template-columns:10px 58px 38px 1fr 26px;gap:6px;align-items:center;padding:4px 6px;border-radius:7px;font-size:13px;cursor:pointer;background:'+(SP.sel===x?"var(--line);box-shadow:inset 0 0 0 2px var(--acc)":"var(--bg)")+'"><i style="width:10px;height:10px;border-radius:50%;background:'+spCol(x)+'"></i><span>'+(x.f/1e6).toFixed(3)+'</span><span class="dim" style="font-size:11px">'+esc(x.mode.slice(0,5))+'</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><a href="'+qrz(x.call)+'" target="_blank" rel="noopener" title="Look up on QRZ" style="color:var(--tx);text-decoration:underline;text-decoration-color:var(--acc)"><b>'+esc(x.call)+'</b></a>'+(x.ref?' <span class="dim" style="font-size:11px">'+esc(x.ref)+'</span>':'')+'</span><span class="dim" style="font-size:11px">'+(ag<1?"<1":ag)+'m</span></div>'}).join(""):'<div class="dim" style="font-size:13px">'+(SP.t?"No spots match these filters.":"Waiting for spots\u2026")+'</div>';
+ var st0=$("sp_list").scrollTop;$("sp_list").innerHTML=SP.vis.length?SP.vis.slice(0,80).map(function(x,i){var ag=Math.round((now-x.t)/6e4);return'<div data-i="'+i+'" style="display:grid;grid-template-columns:10px 58px 38px 1fr 26px;gap:6px;align-items:center;padding:4px 6px;border-radius:7px;font-size:13px;cursor:pointer;background:'+(SP.sel===x?"var(--line);box-shadow:inset 0 0 0 2px var(--acc)":"var(--bg)")+'"><i style="width:10px;height:10px;border-radius:50%;background:'+spCol(x)+'"></i><span>'+(x.f/1e6).toFixed(3)+'</span><span class="dim" style="font-size:11px">'+esc(x.mode.slice(0,5))+'</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><a href="'+qrz(x.call)+'" target="_blank" rel="noopener" title="Look up on QRZ" style="color:var(--tx);text-decoration:underline;text-decoration-color:var(--acc)"><b>'+esc(x.call)+'</b></a>'+lgBadge(x)+(x.ref?' <span class="dim" style="font-size:11px">'+esc(x.ref)+'</span>':'')+'</span><span class="dim" style="font-size:11px">'+(ag<1?"<1":ag)+'m</span></div>'}).join(""):'<div class="dim" style="font-size:13px">'+(SP.t?"No spots match these filters.":"Waiting for spots\u2026")+'</div>';
  var si=SP.sel?SP.vis.indexOf(SP.sel):-1,sl2=$("sp_list"),re=si>-1?sl2.querySelector('[data-i="'+si+'"]'):null;sl2.scrollTop=st0;if(re&&(re.offsetTop<sl2.scrollTop||re.offsetTop+re.offsetHeight>sl2.scrollTop+sl2.clientHeight))sl2.scrollTop=re.offsetTop-sl2.clientHeight/2;
- spLeg();var mp=$("map_pin");if(SP.sel&&mp&&mp.textContent.indexOf("QRZ")<0)mp.insertAdjacentHTML("beforeend",' · <a href="'+qrz(SP.sel.call)+'" target="_blank" rel="noopener" style="color:var(--acc)">Open '+esc(SP.sel.call)+' on QRZ</a>');sunmap()}
+ spLeg();var mp=$("map_pin");if(SP.sel&&mp&&mp.textContent.indexOf("QRZ")<0)mp.insertAdjacentHTML("beforeend",' · <a href="'+qrz(SP.sel.call)+'" target="_blank" rel="noopener" style="color:var(--acc)">Open '+esc(SP.sel.call)+' on QRZ</a> · <a href="#" data-lg="1" style="color:var(--acc)">Log contact</a>');sunmap()}
 function spLayout(W,Hh,mv){var a=[];SP.vis.forEach(function(s){s._x=null;s._c=0;if(s.la==null)return;s._x=((s.lo+180)/360*W-mv.x0)*mv.k;s._y=((90-s.la)/180*Hh-mv.y0)*mv.k;
   var g=null;for(var i=0;i<a.length;i++)if(Math.hypot(a[i].cx-s._x,a[i].cy-s._y)<12){g=a[i];break}
   if(!g){g={cx:s._x,cy:s._y,m:[]};a.push(g)}g.m.push(s)});
  a.forEach(function(g){var n=g.m.length;if(n<2)return;var r=Math.min(38,Math.max(16,6+n*3));g.m.forEach(function(s,i){var t=-Math.PI/2+2*Math.PI*i/n;s._c=1;s._cx=g.cx;s._cy=g.cy;s._x=g.cx+r*Math.cos(t);s._y=g.cy+r*Math.sin(t)})})}
-function spPins(x,W,Hh){if(!SP||!SP.vis)return;var mv=MV||{x0:0,y0:0,k:1};spLayout(W,Hh,mv);SP.vis.forEach(function(s){if(s.la==null)return;var px=s._x,py=s._y;if(s._c){x.beginPath();x.moveTo(s._cx,s._cy);x.lineTo(px,py);x.strokeStyle="rgba(255,255,255,.45)";x.lineWidth=1.5;x.stroke();x.beginPath();x.arc(s._cx,s._cy,3,0,7);x.fillStyle="rgba(255,255,255,.8)";x.fill()}x.beginPath();x.arc(px,py,7,0,7);x.fillStyle=spCol(s);x.fill();x.strokeStyle="rgba(10,16,26,.9)";x.lineWidth=2;x.stroke();})
- var q=SP.sel;if(q&&q.la!=null&&SP.vis.indexOf(q)>-1){var qx=q._x,qy=q._y;x.beginPath();x.arc(qx,qy,17,0,7);x.strokeStyle="rgba(255,255,255,.55)";x.lineWidth=3;x.stroke();x.beginPath();x.arc(qx,qy,10,0,7);x.fillStyle=spCol(q);x.fill();x.strokeStyle="#fff";x.lineWidth=3;x.stroke();x.font="bold 20px sans-serif";x.textAlign="left";x.textBaseline="middle";var lx=qx+22,tw=x.measureText(q.call).width;if(lx+tw>W-6)lx=qx-22-tw;x.lineWidth=5;x.strokeStyle="rgba(10,16,26,.95)";x.strokeText(q.call,lx,qy);x.fillStyle="#fff";x.fillText(q.call,lx,qy)}}
+function spPins(x,W,Hh){if(!SP||!SP.vis)return;var mv=MV||{x0:0,y0:0,k:1};spLayout(W,Hh,mv);SP.vis.forEach(function(s){if(s.la==null)return;x.globalAlpha=lgWorked(s)===2?.4:1;var px=s._x,py=s._y;if(s._c){x.beginPath();x.moveTo(s._cx,s._cy);x.lineTo(px,py);x.strokeStyle="rgba(255,255,255,.45)";x.lineWidth=1.5;x.stroke();x.beginPath();x.arc(s._cx,s._cy,3,0,7);x.fillStyle="rgba(255,255,255,.8)";x.fill()}x.beginPath();x.arc(px,py,7,0,7);x.fillStyle=spCol(s);x.fill();x.strokeStyle="rgba(10,16,26,.9)";x.lineWidth=2;x.stroke();})
+ var q=SP.sel;if(q&&q.la!=null&&SP.vis.indexOf(q)>-1){x.globalAlpha=1;var qx=q._x,qy=q._y;x.beginPath();x.arc(qx,qy,17,0,7);x.strokeStyle="rgba(255,255,255,.55)";x.lineWidth=3;x.stroke();x.beginPath();x.arc(qx,qy,10,0,7);x.fillStyle=spCol(q);x.fill();x.strokeStyle="#fff";x.lineWidth=3;x.stroke();x.font="bold 20px sans-serif";x.textAlign="left";x.textBaseline="middle";var lx=qx+22,tw=x.measureText(q.call).width;if(lx+tw>W-6)lx=qx-22-tw;x.lineWidth=5;x.strokeStyle="rgba(10,16,26,.95)";x.strokeText(q.call,lx,qy);x.fillStyle="#fff";x.fillText(q.call,lx,qy)}}
 SP={all:[],vis:[],col:D.spc||"mode",sel:null,t:0,src:""};
 $("sp_m").value=D.spm||"";$("sp_s").value=D.sps||"";
 ["sp_m","sp_s"].forEach(function(id){$(id).onchange=function(){D.spm=$("sp_m").value;D.sps=$("sp_s").value;save();SP.sel=null;spRender()}});
@@ -719,6 +722,157 @@ function fcast(){var el=$("fc");if(!el)return;var la=parseFloat(D.lat),lo=parseF
   done(d.time.map(function(t,i){return{d:t,i:wmo(d.weather_code[i]),hi:d.temperature_2m_max[i],lo:d.temperature_2m_min[i],p:d.precipitation_probability_max[i]}}))}).catch(off)}
 $("sp_r").onclick=function(){var b=this,n=Date.now();if(n-(SP.rt||0)<5000){$("sp_n").textContent="Just refreshed. Give it a few seconds.";return}SP.rt=n;b.disabled=true;b.style.opacity=".5";spFetch();setTimeout(function(){b.disabled=false;b.style.opacity=""},5000)};
 setInterval(function(){if(SP&&SP.all.length&&$("app").dataset.t==="prop")spRender()},30000);
+var LG=[],LGI={},LGDB=null,LGM=null,LGV=30,LGT=false,LGF=[];
+var LGMODES=["SSB","CW","FM","AM","FT8","FT4","RTTY","PSK31","SSTV","JS8","JT65","MFSK","DIGI","OTHER"];
+var LGORD=["BAND","CALL","MODE","RST_RCVD","RST_SENT","QSO_DATE","TIME_ON","FREQ","NAME","STATE","QTH","GRIDSQUARE","COUNTRY","DXCC","OPERATOR","STATION_CALLSIGN","MY_GRIDSQUARE","LAT","LON","MY_LAT","MY_LON","MY_COUNTRY","MY_DXCC","MY_STATE","MY_NAME","MY_CITY","MY_ANTENNA","TX_PWR","DISTANCE","COMMENT","APP_WRL_ID","SIG","SIG_INFO","POTA_REF","SOTA_REF"];
+function lgUid(){return window.crypto&&crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2,10)}
+function lgAsc(s){return String(s==null?"":s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^\x20-\x7e]/g,function(c){return c==="\n"||c==="\r"||c==="\t"?" ":"?"})}
+function lgZ(n,l){return String(n).padStart(l||2,"0")}
+function lgDay(t){var d=new Date(t);return d.getUTCFullYear()+lgZ(d.getUTCMonth()+1)+lgZ(d.getUTCDate())}
+function lgTm(t){var d=new Date(t);return lgZ(d.getUTCHours())+lgZ(d.getUTCMinutes())+lgZ(d.getUTCSeconds())}
+function lgFrom(d,t){var m=/^(\d{4})(\d{2})(\d{2})$/.exec(d||"");if(!m)return 0;t=String(t||"0000").padEnd(6,"0");return Date.UTC(+m[1],+m[2]-1,+m[3],+t.slice(0,2),+t.slice(2,4),+t.slice(4,6))}
+function utcStart(){var n=new Date();return Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate())}
+function adLoc(v,lat){var h=lat?(v<0?"S":"N"):(v<0?"W":"E"),a=Math.abs(v),d=Math.floor(a),m=(a-d)*60;return h+String(d).padStart(3,"0")+" "+m.toFixed(3).padStart(6,"0")}
+function lgDb(cb){if(!window.indexedDB){cb(null);return}try{var r=indexedDB.open("zs-log",1);r.onupgradeneeded=function(){r.result.createObjectStore("q",{keyPath:"_id"})};r.onsuccess=function(){LGDB=r.result;cb(LGDB)};r.onerror=function(){cb(null)}}catch(e){cb(null)}}
+function lgPut(q){if(!LGDB)return;try{LGDB.transaction("q","readwrite").objectStore("q").put(q)}catch(e){}}
+function lgPutAll(a){if(!LGDB)return;try{var s=LGDB.transaction("q","readwrite").objectStore("q");a.forEach(function(q){s.put(q)})}catch(e){}}
+function lgDelDb(id){if(!LGDB)return;try{LGDB.transaction("q","readwrite").objectStore("q").delete(id)}catch(e){}}
+function lgIdx(){LGI={};LG.forEach(function(q){var k=String(q.CALL||"").toUpperCase();(LGI[k]=LGI[k]||[]).push(q)})}
+function lgWorked(x){var a=LGI[String(x.call).toUpperCase()];if(!a||!a.length)return 0;var d0=utcStart(),g=spGrp(x.mode);for(var i=0;i<a.length;i++){var q=a[i];if(q._t>=d0&&q.BAND===x.band&&spGrp(q.MODE)===g)return 2}return 1}
+function lgBadge(x){var w=lgWorked(x);return w===2?' <span title="Worked today on this band" style="color:var(--ok)">\u2713</span>':w===1?' <span class="dim" title="Worked before" style="font-size:10px">\u25cf</span>':""}
+function lgMy(q){var L=D.ls||{},la=parseFloat(D.lat),lo=parseFloat(D.lon);q.STATION_CALLSIGN=String(D.call).toUpperCase();q.OPERATOR=q.STATION_CALLSIGN;
+ if(!isNaN(la)&&!isNaN(lo)){q.MY_GRIDSQUARE=grid(la,lo);q.MY_LAT=adLoc(la,1);q.MY_LON=adLoc(lo,0)}
+ if(L.ctry)q.MY_COUNTRY=L.ctry;if(L.dxcc)q.MY_DXCC=L.dxcc;if(L.st)q.MY_STATE=L.st.toUpperCase();if(L.nm)q.MY_NAME=L.nm;if(L.city)q.MY_CITY=L.city;if(L.ant)q.MY_ANTENNA=L.ant}
+function lgToast(t){var e=$("lg_t");if(!e){document.body.insertAdjacentHTML("beforeend",'<div id="lg_t" style="position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:70;background:var(--card);border:1px solid var(--ok);border-radius:12px;padding:10px 16px;font-size:14px;display:none"></div>');e=$("lg_t")}
+ e.textContent=t;e.style.display="";clearTimeout(lgToast.h);lgToast.h=setTimeout(function(){e.style.display="none"},3200)}
+/* ---------- ADIF out / in ---------- */
+function lgTg(k,v){v=lgAsc(v).trim();return"<"+k+":"+v.length+">"+v}
+function lgLine(q){var o=[],u={};LGORD.forEach(function(k){if(q[k]!=null&&q[k]!==""){o.push(lgTg(k,q[k]));u[k]=1}});Object.keys(q).forEach(function(k){if(k.charAt(0)!=="_"&&!u[k]&&q[k]!==""&&q[k]!=null)o.push(lgTg(k,q[k]))});return o.join(" ")+" <EOR>"}
+function lgAdif(a){var n=new Date(),ts=n.getUTCFullYear()+"-"+lgZ(n.getUTCMonth()+1)+"-"+lgZ(n.getUTCDate())+" "+lgZ(n.getUTCHours())+":"+lgZ(n.getUTCMinutes())+":"+lgZ(n.getUTCSeconds());
+ a=a.slice().sort(function(x,y){return x._t-y._t});
+ return"# ++++++++++++++++++++++++++++++++++++\n# Zulu Shack\n# "+n.toUTCString()+"\n# ++++++++++++++++++++++++++++++++++++\n\n<ADIF_VER:5>3.1.4 <PROGRAMID:9>zulushack <PROGRAMVERSION:3>1.0 <CREATED_TIMESTAMP:19>"+ts+" <EOH>\n\n"+a.map(lgLine).join("\n\n")+"\n"}
+function lgCsv(a){var H=["Date (UTC)","Time (UTC)","Call","Band","Freq MHz","Mode","RST sent","RST rcvd","Name","QTH","State","Grid","POTA/SOTA","Comment"],q=function(v){v=String(v==null?"":v);return/[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+ return[H.join(",")].concat(a.slice().sort(function(x,y){return x._t-y._t}).map(function(r){return[r.QSO_DATE,r.TIME_ON,r.CALL,r.BAND,r.FREQ,r.MODE,r.RST_SENT,r.RST_RCVD,r.NAME,r.QTH,r.STATE,r.GRIDSQUARE,r.POTA_REF||r.SOTA_REF||"",r.COMMENT].map(q).join(",")})).join("\n")+"\n"}
+function lgFile(name,text){var b=new Blob([text],{type:"text/plain"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1500)}
+function lgScope(){var s=$("lg_sc").value,d0=utcStart();return s==="today"?LG.filter(function(q){return q._t>=d0}):s==="new"?LG.filter(function(q){return!q._x}):LG.slice()}
+function lgName(n,ext){var d=new Date();return String(D.call).toUpperCase()+"_"+n+"_"+lgDay(d)+"_"+lgTm(d)+"."+ext}
+function lgMark(a){a.forEach(function(q){q._x=1});lgPutAll(a);lgBan();lgStats()}
+function lgDec(v){if(!/[\x80-\xff]/.test(v))return v;try{return new TextDecoder("utf-8").decode(Uint8Array.from(v,function(c){return c.charCodeAt(0)}))}catch(e){return v}}
+function lgParse(u8){var s,i;try{s=new TextDecoder("utf-8").decode(u8)}catch(e){s="";for(i=0;i<u8.length;i+=8192)s+=String.fromCharCode.apply(null,u8.subarray(i,i+8192))}
+ var re=/<(eoh|eor)>|<([A-Za-z0-9_]+):(\d+)(?::[A-Za-z0-9]+)?>/gi,m,cur={},out=[],ok=function(p){var c=s.charAt(p);return c===""||c==="<"||/\s/.test(c)};
+ while((m=re.exec(s))){if(m[1]){if(m[1].toLowerCase()==="eor"&&cur.CALL)out.push(cur);cur={};continue}
+  var n=+m[3],p=re.lastIndex,e=p+n;
+  if(!ok(e)){var k=0,bt=0,c;while(bt<n&&p+k<s.length){c=s.charCodeAt(p+k);if(c>=55296&&c<=56319){bt+=4;k+=2}else{bt+=c<128?1:c<2048?2:3;k++}}if(ok(p+k))e=p+k}
+  cur[m[2].toUpperCase()]=s.slice(p,e).trim();re.lastIndex=e}
+ return out}
+function lgKey(q){return String(q.CALL||"").toUpperCase()+"|"+q.QSO_DATE+"|"+String(q.TIME_ON||"").slice(0,4)+"|"+(q.BAND||"")+"|"+spGrp(q.MODE)}
+function lgImport(u8){var recs=lgParse(u8),seen={},wid={},add=[],skip=0;
+ LG.forEach(function(q){seen[lgKey(q)]=1;if(q.APP_WRL_ID)wid[q.APP_WRL_ID]=1});
+ recs.forEach(function(r){var t=lgFrom(r.QSO_DATE,r.TIME_ON);if(!t||!r.CALL){skip++;return}
+  if(/^(USB|LSB)$/i.test(r.MODE))r.MODE="SSB";if(!r.BAND&&r.FREQ)r.BAND=bandOf(parseFloat(r.FREQ)*1e6);
+  var k=lgKey(r);if(seen[k]||(r.APP_WRL_ID&&wid[r.APP_WRL_ID])){skip++;return}seen[k]=1;
+  r._id=lgUid();r._t=t;r._x=1;add.push(r)});
+ add.forEach(function(q){LG.push(q)});lgPutAll(add);lgIdx();lgRender();spRender();return{n:add.length,skip:skip}}
+/* ---------- contact panel ---------- */
+function lgBuild(){document.body.insertAdjacentHTML("beforeend",'<div id="lg_m" style="display:none;position:fixed;inset:0;z-index:60;background:rgba(5,10,18,.75);overflow:auto;padding:12px"><div class="card" style="max-width:580px;margin:0 auto">'
+ +'<div class="row"><b id="lg_h" style="font-size:17px">Log contact</b><button id="lg_x" title="Close without saving">\u2715</button></div>'
+ +'<div class="dim" id="lg_hint" style="font-size:12px;margin:4px 0 10px">Nothing is saved until you press Log QSO.</div>'
+ +'<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">'
+ +'<label>Callsign<input id="lg_call" autocapitalize="characters" autocomplete="off"></label><label>Frequency (MHz)<input id="lg_f" inputmode="decimal"></label>'
+ +'<label>Mode<select id="lg_mode"></select></label><label>Band<input id="lg_band" readonly></label>'
+ +'<label>Date (UTC)<input id="lg_date" placeholder="YYYY-MM-DD"></label><label>Time on (UTC)<input id="lg_time" placeholder="HH:MM:SS"></label>'
+ +'<label>RST sent<input id="lg_rs"></label><label>RST received<input id="lg_rr"></label>'
+ +'<label>Name<input id="lg_name"></label><label>QTH<input id="lg_qth"></label>'
+ +'<label>State<input id="lg_st" maxlength="3"></label><label>Grid<input id="lg_gr" autocomplete="off"></label>'
+ +'<label>POTA / SOTA reference<input id="lg_ref" autocomplete="off"></label><label>Power (W)<input id="lg_pw" inputmode="numeric"></label>'
+ +'<label style="grid-column:1/-1">Comment<input id="lg_cm"></label></div>'
+ +'<div id="lg_info" style="font-size:13px;margin-top:10px;min-height:18px"></div><div id="lg_msg" style="color:var(--bad);font-size:13px;min-height:18px"></div>'
+ +'<div class="row" style="margin-top:6px;justify-content:flex-start;gap:8px"><button id="lg_ok" class="on" style="padding:10px 18px">Log QSO</button><button id="lg_no">Not worked</button><button id="lg_now">Time = now</button><a id="lg_qrz" target="_blank" rel="noopener" style="color:var(--acc);font-size:13px">QRZ</a><span style="flex:1"></span><button id="lg_dl" style="display:none;color:var(--bad)">Delete</button></div>'
+ +'</div></div>');
+ $("lg_mode").innerHTML=LGMODES.map(function(m){return"<option>"+m+"</option>"}).join("")}
+function lgClose(){$("lg_m").style.display="none";document.body.style.overflow="";LGM=null}
+function lgRst(m){var g=spGrp(m);return m==="CW"?"599":(g==="PH"||m==="FM"||m==="AM"||m==="SSB")?"59":""}
+function lgOpen(s,rec){if(!$("lg_m"))lgBuild();var q=rec||{},now=Date.now(),t=rec?rec._t:now,mode=rec?q.MODE:s?(/^(USB|LSB)$/i.test(s.mode)?"SSB":(s.mode||"")):"";
+ LGM={rec:rec||null,spot:s||null};
+ if(mode&&LGMODES.indexOf(mode)<0)$("lg_mode").insertAdjacentHTML("beforeend","<option>"+esc(mode)+"</option>");
+ var f=rec?q.FREQ:s?String(+(s.f/1e6).toFixed(6)):"";
+ $("lg_h").textContent=rec?"Edit contact":"Log contact";$("lg_hint").textContent=rec?"Changes are saved when you press Save.":"Nothing is saved until you press Log QSO. Closing this panel discards it.";
+ $("lg_ok").textContent=rec?"Save":"Log QSO";$("lg_no").textContent=rec?"Close":"Not worked";$("lg_dl").style.display=rec?"":"none";
+ $("lg_call").value=rec?q.CALL:s?s.call:"";$("lg_f").value=f;$("lg_mode").value=mode||"SSB";$("lg_band").value=f?bandOf(parseFloat(f)*1e6):"";
+ var d=lgDay(t),tt=lgTm(t);$("lg_date").value=d.slice(0,4)+"-"+d.slice(4,6)+"-"+d.slice(6,8);$("lg_time").value=tt.slice(0,2)+":"+tt.slice(2,4)+":"+tt.slice(4,6);
+ $("lg_rs").value=rec?(q.RST_SENT||""):lgRst(mode);$("lg_rr").value=rec?(q.RST_RCVD||""):lgRst(mode);
+ $("lg_name").value=rec?(q.NAME||""):(s&&s.nm)||"";$("lg_qth").value=rec?(q.QTH||""):(s&&s.qth)||"";$("lg_st").value=rec?(q.STATE||""):(s&&s.st)||"";$("lg_gr").value=rec?(q.GRIDSQUARE||""):(s&&s.gr)||"";
+ $("lg_ref").value=rec?(q.POTA_REF||q.SOTA_REF||""):(s&&s.ref)||"";$("lg_pw").value=rec?(q.TX_PWR||""):((D.ls||{}).pw||"");$("lg_cm").value=rec?(q.COMMENT||""):"";
+ $("lg_msg").textContent="";$("lg_qrz").href=qrz($("lg_call").value||"");lgInfo();$("lg_m").style.display="";document.body.style.overflow="hidden";$("lg_m").scrollTop=0}
+function lgInfo(){var c=$("lg_call").value.trim().toUpperCase(),el=$("lg_info"),ed=LGM&&LGM.rec,a=(LGI[c]||[]).filter(function(q){return!ed||q._id!==LGM.rec._id});
+ $("lg_qrz").href=qrz(c||"");if(!c||!a.length){el.textContent="";return}
+ a.sort(function(x,y){return y._t-x._t});var d0=utcStart(),b=bandOf(parseFloat($("lg_f").value)*1e6),g=spGrp($("lg_mode").value),dupe=a.some(function(q){return q._t>=d0&&q.BAND===b&&spGrp(q.MODE)===g});
+ el.style.color=dupe?"var(--utc)":"var(--dim)";
+ el.textContent=(dupe?"Already worked today on "+b+" "+$("lg_mode").value+". ":"")+"Worked before ("+a.length+"): "+a.slice(0,3).map(function(q){return(q.BAND||"")+" "+q.MODE+" "+String(q.QSO_DATE).replace(/(\d{4})(\d{2})(\d{2})/,"$1-$2-$3")}).join("; ")+(a.length>3?" ...":"")}
+function lgSave(){var msg=function(t){$("lg_msg").textContent=t},call=$("lg_call").value.trim().toUpperCase(),f=parseFloat($("lg_f").value);
+ if(!call){msg("Enter a callsign.");return}if(!(f>0)){msg("Enter the frequency in MHz.");return}
+ var dm=/^(\d{4})-(\d{2})-(\d{2})$/.exec($("lg_date").value.trim()),tm=/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec($("lg_time").value.trim());
+ if(!dm||!tm){msg("Check the UTC date (YYYY-MM-DD) and time (HH:MM:SS).");return}
+ var t=Date.UTC(+dm[1],+dm[2]-1,+dm[3],+tm[1],+tm[2],+(tm[3]||0)),old=LGM.rec,q=old?Object.assign({},old):{_id:lgUid(),_x:0},s=LGM.spot,v=function(id){return $(id).value.trim()},mode=$("lg_mode").value;
+ q._t=t;q._x=0;q.CALL=call;q.QSO_DATE=lgDay(t);q.TIME_ON=lgTm(t);q.FREQ=String(+f.toFixed(6));q.BAND=bandOf(f*1e6)||"";q.MODE=/^(USB|LSB)$/i.test(mode)?"SSB":mode;
+ var set=function(k,val){if(val)q[k]=val;else delete q[k]};
+ set("RST_SENT",v("lg_rs"));set("RST_RCVD",v("lg_rr"));set("NAME",v("lg_name"));set("QTH",v("lg_qth"));set("STATE",v("lg_st").toUpperCase());set("GRIDSQUARE",v("lg_gr"));set("TX_PWR",v("lg_pw"));set("COMMENT",v("lg_cm"));
+ var ref=v("lg_ref").toUpperCase(),src=s&&s.src;delete q.POTA_REF;delete q.SOTA_REF;delete q.SIG;delete q.SIG_INFO;
+ if(ref){var sota=/^[A-Z0-9]{1,3}\/[A-Z]{2}-\d{3}$/.test(ref)||src==="SOTA";q.SIG=sota?"SOTA":"POTA";q.SIG_INFO=ref;if(sota)q.SOTA_REF=ref;else q.POTA_REF=ref}
+ if(!old)lgMy(q);
+ var la=null,lo=null,g=v("lg_gr").length>=4?g2ll(v("lg_gr").slice(0,6)):null;if(g){la=g[0];lo=g[1]}else if(s&&s.la!=null&&(s.src==="POTA"||s.src==="SOTA")){la=s.la;lo=s.lo}
+ if(la!=null){q.LAT=adLoc(la,1);q.LON=adLoc(lo,0);var ml=parseFloat(D.lat),mo=parseFloat(D.lon);if(!isNaN(ml)&&!isNaN(mo))q.DISTANCE=gcb(ml,mo,la,lo).d.toFixed(2)}
+ if(old){LG[LG.indexOf(old)]=q}else LG.push(q);
+ lgPut(q);lgIdx();lgRender();lgBan();spRender();lgClose();lgToast((old?"Saved ":"Logged ")+call+(q.BAND?" \u00b7 "+q.BAND:"")+" "+q.MODE)}
+/* ---------- log tab ---------- */
+function lgStats(){var e=$("lg_st_b");if(!e)return;var d0=utcStart(),td=LG.filter(function(q){return q._t>=d0}).length,wk=LG.filter(function(q){return q._t>=d0-6*864e5}).length,nw=LG.filter(function(q){return!q._x}).length,bc={},mc={};
+ LG.forEach(function(q){bc[q.BAND||"?"]=(bc[q.BAND||"?"]||0)+1;mc[q.MODE||"?"]=(mc[q.MODE||"?"]||0)+1});
+ var top=function(o){var a=Object.keys(o).sort(function(x,y){return o[y]-o[x]}).slice(0,6),mx=a.length?o[a[0]]:1;return a.map(function(k){return'<div style="display:grid;grid-template-columns:44px 1fr 36px;gap:6px;align-items:center;font-size:12px"><span>'+esc(k)+'</span><i style="display:block;height:8px;border-radius:4px;background:var(--acc);width:'+Math.max(4,o[k]/mx*100)+'%"></i><span class="dim" style="text-align:right">'+o[k]+'</span></div>'}).join("")};
+ e.innerHTML='<div class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:6px"><div><div class="dim" style="font-size:12px">Total</div><div class="wx" style="font-size:24px">'+LG.length+'</div></div><div><div class="dim" style="font-size:12px">Today (UTC)</div><div class="wx" style="font-size:24px">'+td+'</div></div><div><div class="dim" style="font-size:12px">Not exported</div><div class="wx" style="font-size:24px">'+nw+'</div></div></div>'
+ +'<div class="dim" style="font-size:12px;margin:8px 0 3px">Last 7 days: '+wk+'</div><div style="display:grid;gap:3px">'+top(bc)+'</div><div class="dim" style="font-size:12px;margin:8px 0 3px">Modes</div><div style="display:grid;gap:3px">'+top(mc)+'</div>'}
+function lgRender(){if(!$("lg_list"))return;var t=($("lg_q").value||"").trim().toUpperCase(),d0=utcStart(),a=LG.slice().sort(function(x,y){return y._t-x._t});
+ if(LGT)a=a.filter(function(q){return q._t>=d0});
+ if(t)a=a.filter(function(q){return[q.CALL,q.NAME,q.QTH,q.STATE,q.POTA_REF,q.SOTA_REF,q.COMMENT,q.GRIDSQUARE,q.BAND,q.MODE].join(" ").toUpperCase().indexOf(t)>-1});
+ LGF=a;$("lg_cnt").textContent=a.length+(a.length===LG.length?"":" of "+LG.length)+" contacts";$("lg_td").classList.toggle("on",LGT);
+ $("lg_list").innerHTML=a.length?a.slice(0,LGV).map(function(q,i){var ds=String(q.QSO_DATE||"").replace(/(\d{4})(\d{2})(\d{2})/,"$1-$2-$3"),tt=String(q.TIME_ON||"").slice(0,4).replace(/(\d{2})(\d{2})/,"$1:$2");
+  return'<div data-i="'+i+'" style="padding:7px 9px;border:1px solid var(--line);border-radius:9px;background:var(--bg);cursor:pointer"><div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><b>'+esc(q.CALL)+'</b><span>'+esc(q.BAND||"")+" "+esc(q.MODE||"")+'</span><span class="dim" style="font-size:12px">'+esc(q.FREQ||"")+' MHz</span><span class="dim" style="font-size:12px;margin-left:auto">'+ds+" "+tt+'Z</span></div><div class="dim" style="font-size:12px">'+[q.NAME,q.QTH,q.STATE,q.POTA_REF||q.SOTA_REF].filter(Boolean).map(esc).join(" \u00b7 ")+'</div></div>'}).join(""):'<div class="dim" style="font-size:13px">'+(LG.length?"No contacts match.":"No contacts yet. Tap a spot and press Log QSO, or use Add contact.")+'</div>';
+ $("lg_more").style.display=a.length>LGV?"":"none";lgStats()}
+function lgBan(){var e=$("lg_ban");if(!e)return;var d0=utcStart(),n=LG.filter(function(q){return!q._x&&q._t<d0}).length;e.style.display=n?"":"none";$("lg_bt").textContent=n+" contact"+(n>1?"s":"")+" from earlier days "+(n>1?"haven\u2019t":"hasn\u2019t")+" been exported yet."}
+function lgPv(){var la=parseFloat(D.lat),lo=parseFloat(D.lon),e=$("ls_pv");if(!e)return;e.textContent=isNaN(la)||isNaN(lo)?"Set your location to log your grid square.":"Logged as "+String(D.call).toUpperCase()+" \u00b7 grid "+grid(la,lo)+" \u00b7 "+adLoc(la,1)+" "+adLoc(lo,0)+". Your location comes from Settings."}
+(function(){
+ $("app").insertAdjacentHTML("beforeend",
+ '<div class="card" id="lgcard"><div class="row"><span class="lbl">Log</span><span class="dim" id="lg_cnt" style="font-size:12px"></span></div>'
+ +'<div class="row" style="margin-top:8px;flex-wrap:nowrap;gap:6px"><input id="lg_q" placeholder="Search call, name, park..." style="flex:1;min-width:0"><button id="lg_td">Today</button><button id="lg_add" class="on">+ Add</button></div>'
+ +'<div id="lg_list" style="margin-top:10px;display:grid;gap:5px"></div><button id="lg_more" style="margin-top:8px;display:none;width:100%">Show more</button></div>'
+ +'<div class="card" id="lgtools"><div class="lbl" style="margin-bottom:6px">Totals</div><div id="lg_st_b"></div>'
+ +'<div class="lbl" style="margin:14px 0 6px">Export</div><div class="row" style="gap:6px;flex-wrap:wrap;justify-content:flex-start"><select id="lg_sc"><option value="new">New since last export</option><option value="today">Today (UTC)</option><option value="all">Everything</option></select></div>'
+ +'<div class="row" style="gap:6px;margin-top:8px;justify-content:flex-start;flex-wrap:wrap"><button id="lg_ea" class="on">Download .adi</button><button id="lg_es" style="display:none">Share</button><button id="lg_ec">CSV</button></div>'
+ +'<div class="dim" style="font-size:12px;margin-top:6px">Upload the .adi file to World Radio League, POTA CAT or TQSL.</div>'
+ +'<div class="lbl" style="margin:14px 0 6px">Import</div><input type="file" id="lg_file" accept=".adi,.adif,.txt,text/plain" style="width:100%"><div class="dim" id="lg_n" style="font-size:12px;margin-top:6px">Import an ADIF file (such as a World Radio League export) so worked-before marks show on the spots list. Duplicates are skipped.</div></div>'
+ +'<div class="card" id="lsc"><div class="lbl">Station info for your log</div><div class="grid" style="margin-top:8px"><label>Operator name<input id="ls_nm"></label><label>City / QTH<input id="ls_city"></label><label>State<input id="ls_st" maxlength="3"></label><label>Country<input id="ls_ctry"></label><label>DXCC number<input id="ls_dxcc" inputmode="numeric"></label><label>Antenna<input id="ls_ant"></label><label>Power (W)<input id="ls_pw" inputmode="numeric"></label></div><div class="dim" id="ls_pv" style="font-size:12px;margin-top:8px"></div></div>');
+ $("tabs").insertAdjacentHTML("afterend",'<div id="lg_ban" style="display:none;order:0;grid-column:1/-1;background:#3a3320;border:1px solid var(--utc);border-radius:14px;padding:8px 14px;font-size:13px"><span id="lg_bt"></span> <button id="lg_bx" style="padding:3px 10px;margin-left:6px">Export now</button></div>');
+ if(!D.ls){D.ls={ctry:"United States of America",dxcc:"291"};save()}
+ ["nm","city","st","ctry","dxcc","ant","pw"].forEach(function(k){$("ls_"+k).value=D.ls[k]||"";$("ls_"+k).oninput=function(){D.ls[k]=this.value.trim();save();lgPv()}});lgPv();
+ lgBuild();
+ $("lg_x").onclick=lgClose;$("lg_no").onclick=lgClose;$("lg_ok").onclick=lgSave;$("lg_now").onclick=function(){var t=Date.now(),d=lgDay(t),tt=lgTm(t);$("lg_date").value=d.slice(0,4)+"-"+d.slice(4,6)+"-"+d.slice(6,8);$("lg_time").value=tt.slice(0,2)+":"+tt.slice(2,4)+":"+tt.slice(4,6);lgInfo()};
+ $("lg_dl").onclick=function(){if(LGM&&LGM.rec&&confirm("Delete this contact from your log?")){var r=LGM.rec;LG.splice(LG.indexOf(r),1);lgDelDb(r._id);lgIdx();lgRender();lgBan();spRender();lgClose();lgToast("Deleted "+r.CALL)}};
+ $("lg_call").oninput=function(){this.value=this.value.toUpperCase();lgInfo()};$("lg_f").oninput=function(){$("lg_band").value=bandOf(parseFloat(this.value)*1e6)||"";lgInfo()};$("lg_mode").onchange=function(){lgInfo()};
+ $("lg_m").onclick=function(e){if(e.target===this)lgClose()};
+ $("lg_q").oninput=function(){LGV=30;lgRender()};$("lg_td").onclick=function(){LGT=!LGT;LGV=30;lgRender()};$("lg_add").onclick=function(){lgOpen(null,null)};
+ $("lg_more").onclick=function(){LGV+=50;lgRender()};
+ $("lg_list").onclick=function(e){var r=e.target.closest("[data-i]");if(r&&LGF[+r.dataset.i])lgOpen(null,LGF[+r.dataset.i])};
+ $("lg_ea").onclick=function(){var a=lgScope();if(!a.length){$("lg_n").textContent="Nothing to export for that choice.";return}lgFile(lgName(a.length,"adi"),lgAdif(a));lgMark(a);$("lg_n").textContent="Exported "+a.length+" contact"+(a.length>1?"s":"")+". Upload the file to your logging service."};
+ $("lg_ec").onclick=function(){var a=lgScope();if(!a.length){$("lg_n").textContent="Nothing to export for that choice.";return}lgFile(lgName(a.length,"csv"),lgCsv(a))};
+ try{var tf=new File(["x"],"t.adi",{type:"text/plain"});if(navigator.canShare&&navigator.canShare({files:[tf]}))$("lg_es").style.display=""}catch(e){}
+ $("lg_es").onclick=function(){var a=lgScope();if(!a.length){$("lg_n").textContent="Nothing to export for that choice.";return}var nm=lgName(a.length,"adi");navigator.share({files:[new File([lgAdif(a)],nm,{type:"text/plain"})],title:nm}).then(function(){lgMark(a)}).catch(function(){})};
+ $("lg_file").onchange=function(){var f=this.files[0],me=this;if(!f)return;var r=new FileReader();r.onload=function(){try{var o=lgImport(new Uint8Array(r.result));$("lg_n").textContent="Imported "+o.n+" contact"+(o.n===1?"":"s")+(o.skip?"; skipped "+o.skip+" duplicate or unreadable.":".")}catch(e){$("lg_n").textContent="Couldn\u2019t read that file."}};r.readAsArrayBuffer(f);me.value=""};
+ $("lg_bx").onclick=function(){$("lg_sc").value="new";showTab("log")};
+ $("map_pin").onclick=function(e){if(e.target.dataset&&e.target.dataset.lg){e.preventDefault();if(SP&&SP.sel)lgOpen(SP.sel)}};
+ var oc=$("sp_list").onclick;$("sp_list").onclick=function(e){var r=e.target.closest("[data-i]"),s=r&&SP.vis[+r.dataset.i],link=e.target.closest("a");oc.call(this,e);if(s&&!link)lgOpen(s)};
+ $("sp_hw").checked=!!D.sphw;$("sp_hw").onchange=function(){D.sphw=this.checked;save();SP.sel=null;spRender()};
+ lgDb(function(db){if(!db){$("lg_n").textContent="Log storage isn\u2019t available in this browser.";return}var rq=db.transaction("q").objectStore("q").getAll();rq.onsuccess=function(){LG=rq.result||[];lgIdx();lgRender();lgBan();spRender()}});
+ lgRender();setInterval(lgBan,60000)})();
+
 function satInit(){try{var c=JSON.parse(localStorage.getItem("hc_tle")||"null");if(c&&c.x)satLoad(c.x,c.t)}catch(e){}
  $("trk_mode").value=D.tm||"top";$("trk_tol").value=D.tt||"10";$("trk_dec").value=D.td||"";trxInit();satUI();satCalc();if(!SAT.t||Date.now()-SAT.t>864e5)satFetch()}
 satInit();
@@ -773,8 +927,8 @@ function radar(){var r=$("radar");if(!r)return;var la=parseFloat(D.lat),lo=parse
  if(r.dataset.u===u)return;r.dataset.u=u;
  r.innerHTML='<iframe src="'+u+'" title="Live radar" loading="lazy" style="width:100%;height:380px;border:0;border-radius:9px"></iframe><div class="dim" style="font-size:12px;margin-top:4px">Live radar by Windy.com. Needs an internet connection.</div>'}
 $("rdr_t").onclick=function(){D.radar=(D.radar===false);save();radar()};
-var TABS={utc:["main","clock"],wx:["main","wx"],jd_d:["main","tz"],sunloc:["main","sun"],sfi:["prop","solar"],map:["prop","map"],gt_in:["prop","grid"],sp_list:["prop","spots"],bands:["more"],sat_list:["sat","passes"],trk_go:["sat","trk"],s_call:["more"]};
-function showTab(t){D.tab=t;save();$("app").dataset.t=t;glDraw();spMaybe();document.querySelectorAll("#app .card").forEach(function(c){c.style.display=c.dataset.tab===t?"":"none"});Array.prototype.forEach.call($("tabs").children,function(b){b.classList.toggle("on",b.dataset.t===t)})}
+var TABS={utc:["main","clock"],wx:["main","wx"],jd_d:["main","tz"],sunloc:["main","sun"],sfi:["prop","solar"],map:["prop","map"],gt_in:["prop","grid"],sp_list:["prop","spots"],bands:["more"],sat_list:["sat","passes"],trk_go:["sat","trk"],s_call:["more"],ls_nm:["more"],lg_list:["log","lgmain"],lg_st_b:["log","lgtools"]};
+function showTab(t){D.tab=t;save();$("app").dataset.t=t;glDraw();spMaybe();if(t==="log"&&typeof lgRender==="function")lgRender();document.querySelectorAll("#app .card").forEach(function(c){c.style.display=c.dataset.tab===t?"":"none"});Array.prototype.forEach.call($("tabs").children,function(b){b.classList.toggle("on",b.dataset.t===t)})}
 Object.keys(TABS).forEach(function(id){var c=$(id).closest(".card");c.dataset.tab=TABS[id][0];if(TABS[id][1])c.dataset.k=TABS[id][1]});document.querySelector(".card.links").dataset.tab="more";
 $("tabs").onclick=function(e){var t=e.target.dataset.t;if(t)showTab(t)};
 if(D.gt)gtShow(D.gt);else gtDraw();radar();
